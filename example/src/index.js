@@ -3,6 +3,7 @@ import * as React from "react";
 import { debounce } from "lodash";
 import ReactDOM from "react-dom";
 import Editor from "../../src";
+import Markdown from "../../src/serializer";
 
 const element = document.getElementById("main");
 const savedText = localStorage.getItem("saved");
@@ -11,7 +12,7 @@ const exampleText = `
 
 This is example content. It is persisted between reloads in localStorage.
 `;
-const defaultValue = savedText || exampleText;
+const defaultValue = Markdown.deserialize(savedText || exampleText);
 
 class GoogleEmbed extends React.Component<*> {
   render() {
@@ -37,7 +38,7 @@ class Example extends React.Component<*, { readOnly: boolean, dark: boolean }> {
   };
 
   handleChange = debounce(value => {
-    localStorage.setItem("saved", value());
+    localStorage.setItem("saved", Markdown.serialize(value()));
   }, 250);
 
   render() {

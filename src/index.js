@@ -9,7 +9,6 @@ import defaultSchema from "./schema";
 import getDataTransferFiles from "./lib/getDataTransferFiles";
 import isModKey from "./lib/isModKey";
 import Flex from "./components/Flex";
-import Markdown from "./serializer";
 import createPlugins from "./plugins";
 import commands from "./commands";
 import queries from "./queries";
@@ -21,7 +20,7 @@ const defaultOptions = {};
 
 export type Props = {
   id?: string,
-  defaultValue: string,
+  defaultValue: Value,
   placeholder: string,
   pretitle?: string,
   plugins: Plugin[],
@@ -52,7 +51,7 @@ type State = {
 
 class RichMarkdownEditor extends React.PureComponent<Props, State> {
   static defaultProps = {
-    defaultValue: "",
+    defaultValue: Value.create(),
     placeholder: "Write something nice…",
     onImageUploadStart: () => {},
     onImageUploadStop: () => {},
@@ -78,7 +77,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     this.plugins = [...props.plugins, ...builtInPlugins];
 
     this.state = {
-      editorValue: Markdown.deserialize(props.defaultValue),
+      editorValue: props.defaultValue,
     };
   }
 
@@ -126,8 +125,8 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     this.editor = ref;
   };
 
-  value = (): string => {
-    return Markdown.serialize(this.state.editorValue);
+  value = (): Value => {
+    return this.state.editorValue;
   };
 
   handleChange = ({ value }: { value: Value }) => {
