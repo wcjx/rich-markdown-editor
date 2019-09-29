@@ -14,7 +14,7 @@ import {
   HorizontalRuleIcon,
   TodoListIcon,
   TableIcon,
-} from "outline-icons";
+} from "../../icons";
 import getDataTransferFiles from "../../lib/getDataTransferFiles";
 import type { SlateNodeProps, Theme } from "../../types";
 import EditList from "../../plugins/EditList";

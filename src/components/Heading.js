@@ -1,7 +1,7 @@
 // @flow
 import * as React from "react";
 import styled from "styled-components";
-import { CollapsedIcon } from "outline-icons";
+import { CollapsedIcon } from "../icons";
 import type { SlateNodeProps } from "../types";
 import headingToSlug from "../lib/headingToSlug";
 import CopyToClipboard from "./CopyToClipboard";

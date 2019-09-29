@@ -11,7 +11,7 @@ import {
   InsertAboveIcon,
   InsertBelowIcon,
   TrashIcon,
-} from "outline-icons";
+} from "../../icons";
 
 import type { Theme } from "../../types";
 import ToolbarButton from "./ToolbarButton";

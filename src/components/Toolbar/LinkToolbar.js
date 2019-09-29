@@ -6,7 +6,7 @@ import { Editor, findDOMNode as slateFindDOMNode } from "slate-react";
 import ArrowKeyNavigation from "boundless-arrow-key-navigation/build";
 import styled, { withTheme } from "styled-components";
 import keydown from "react-keydown";
-import { CloseIcon, OpenIcon, TrashIcon } from "outline-icons";
+import { CloseIcon, OpenIcon, TrashIcon } from "../../icons";
 import type { SearchResult } from "../../types";
 import Flex from "../Flex";
 import LinkSearchResult from "./LinkSearchResult";

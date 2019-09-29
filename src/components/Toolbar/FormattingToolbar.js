@@ -11,7 +11,7 @@ import {
   BlockQuoteIcon,
   LinkIcon,
   StrikethroughIcon,
-} from "outline-icons";
+} from "../../icons";
 
 import type { Theme, Mark, Block } from "../../types";
 import ToolbarButton from "./ToolbarButton";
