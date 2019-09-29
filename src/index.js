@@ -40,6 +40,7 @@ export type Props = {
   onSearchLink?: (term: string) => Promise<SearchResult[]>,
   onClickLink?: (href: string) => void,
   onShowToast?: (message: string) => void,
+  editorRef?: (ref: Editor) => Editor,
   getLinkComponent?: Node => ?React.ComponentType<any>,
   className?: string,
   style?: Object,
@@ -57,6 +58,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     onImageUploadStop: () => {},
     plugins: [],
     tooltip: "span",
+    editorRef: () => {},
   };
 
   editor: Editor;
@@ -123,6 +125,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
 
   setEditorRef = (ref: Editor) => {
     this.editor = ref;
+    this.props.editorRef(ref);
   };
 
   value = (): Value => {
@@ -258,6 +261,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
       defaultValue,
       autoFocus,
       plugins,
+      editorRef,
       ...rest
     } = this.props;
 
