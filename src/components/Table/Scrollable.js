@@ -68,7 +68,7 @@ const Wrapper = styled.div`
 
 const Scrolling = styled.div`
   overflow-y: hidden;
-  overflow-x: scroll;
+  overflow-x: auto;
   padding-left: 1em;
   border-left: 1px solid transparent;
   border-right: 1px solid transparent;

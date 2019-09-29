@@ -198,21 +198,8 @@ export const Menu = styled.div`
   box-sizing: border-box;
   pointer-events: none;
   white-space: nowrap;
+  box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12);
 
-  &::before {
-    content: "";
-    display: block;
-    width: 24px;
-    height: 24px;
-    transform: translateX(-50%) rotate(45deg);
-    background: ${props => props.theme.toolbarBackground};
-    border-radius: 3px;
-    z-index: -1;
-
-    position: absolute;
-    bottom: -2px;
-    left: 50%;
-  }
 
   * {
     box-sizing: border-box;

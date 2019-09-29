@@ -3,15 +3,15 @@
 import type { Theme } from "./types";
 
 const colors = {
-  almostBlack: "#181A1B",
-  lightBlack: "#2F3336",
+  almostBlack: "#21252b",
+  lightBlack: "#282c34",
   almostWhite: "#E6E6E6",
   white: "#FFF",
   white10: "rgba(255, 255, 255, 0.1)",
   black: "#000",
   black10: "rgba(0, 0, 0, 0.1)",
   primary: "#1AB6FF",
-  greyLight: "#F4F7FA",
+  greyLight: "#F5F5F5",
   grey: "#E8EBED",
   greyMid: "#9BA6B2",
   greyDark: "#DAE1E9",
@@ -53,9 +53,9 @@ export const light: Theme = {
   text: colors.almostBlack,
   code: colors.lightBlack,
 
-  toolbarBackground: colors.lightBlack,
+  toolbarBackground: colors.white,
   toolbarInput: colors.white10,
-  toolbarItem: colors.white,
+  toolbarItem: colors.lightBlack,
 
   blockToolbarBackground: colors.greyLight,
   blockToolbarTrigger: colors.greyMid,
@@ -75,20 +75,20 @@ export const light: Theme = {
 
 export const dark: Theme = {
   ...base,
-  background: colors.almostBlack,
+  background: colors.lightBlack,
   text: colors.almostWhite,
   code: colors.almostWhite,
 
-  toolbarBackground: colors.white,
+  toolbarBackground: colors.almostBlack,
   toolbarInput: colors.black10,
-  toolbarItem: colors.lightBlack,
+  toolbarItem: colors.greyLight,
 
-  blockToolbarBackground: colors.white,
+  blockToolbarBackground: colors.almostBlack,
   blockToolbarTrigger: colors.almostWhite,
   blockToolbarTriggerIcon: colors.almostBlack,
-  blockToolbarItem: colors.lightBlack,
+  blockToolbarItem: colors.greyLight,
 
-  tableDivider: colors.lightBlack,
+  tableDivider: colors.almostBlack,
   tableSelected: colors.primary,
   tableSelectedBackground: "#002333",
 

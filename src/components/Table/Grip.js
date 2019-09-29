@@ -13,7 +13,7 @@ const Grip = styled.a`
     background: ${props =>
       props.isSelected
         ? props.theme.tableSelected
-        : props.theme.toolbarBackground};
+        : props.theme.tableSelected};
   }
 `;
 
