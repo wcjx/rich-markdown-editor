@@ -50,10 +50,25 @@ export type Props = {
 type State = {
   editorValue: Value,
 };
-
+const voidValue = {
+  document: {
+    nodes: [
+      {
+        object: "block",
+        type: "paragraph",
+        nodes: [
+          {
+            object: "text",
+            text: "",
+          },
+        ],
+      },
+    ],
+  },
+};
 class RichMarkdownEditor extends React.PureComponent<Props, State> {
   static defaultProps = {
-    defaultValue: Value.create(),
+    defaultValue: Value.fromJS(voidValue),
     placeholder: "Write something nice…",
     onImageUploadStart: () => {},
     onImageUploadStop: () => {},
