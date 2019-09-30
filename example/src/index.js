@@ -58,6 +58,7 @@ class Example extends React.Component<*, { readOnly: boolean, dark: boolean }> {
         <Editor
           id="example"
           readOnly={this.state.readOnly}
+          spellCheck={false}
           defaultValue={defaultValue}
           onSave={options => console.log("Save triggered", options)}
           onCancel={() => console.log("Cancel triggered")}

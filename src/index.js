@@ -41,6 +41,7 @@ export type Props = {
   onClickLink?: (href: string) => void,
   onShowToast?: (message: string) => void,
   editorRef?: (ref: Editor) => Editor,
+  spellCheck?: boolean,
   getLinkComponent?: Node => ?React.ComponentType<any>,
   className?: string,
   style?: Object,
@@ -59,6 +60,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     plugins: [],
     tooltip: "span",
     editorRef: () => {},
+    spellCheck: true,
   };
 
   editor: Editor;
@@ -200,7 +202,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
   handleKeyDown = (
     ev: SyntheticKeyboardEvent<>,
     editor: TEditor,
-    next: Function = () => {}
+    next: Function = () => {},
   ) => {
     if (this.props.readOnly) return next();
 
@@ -262,6 +264,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
       autoFocus,
       plugins,
       editorRef,
+      spellCheck,
       ...rest
     } = this.props;
 
@@ -297,7 +300,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
             onImageUploadStop={onImageUploadStop}
             onShowToast={onShowToast}
             readOnly={readOnly}
-            spellCheck={!readOnly}
+            spellCheck={spellCheck || readOnly}
             uploadImage={uploadImage}
             pretitle={pretitle}
             options={defaultOptions}
@@ -317,6 +320,7 @@ const StyledEditor = styled(Editor)`
   font-size: 1em;
   line-height: 1.7em;
   width: 100%;
+  padding: 2.7em;
 
   h1,
   h2,
