@@ -74,7 +74,7 @@ class BlockToolbar extends React.Component<Props> {
 
   insertBlock = (
     options: Options,
-    cursorPosition: "before" | "on" | "after" = "on"
+    cursorPosition: "before" | "on" | "after" = "on",
   ) => {
     const { editor } = this.props;
 
@@ -128,7 +128,7 @@ class BlockToolbar extends React.Component<Props> {
           {
             type: { type: "horizontal-rule", isVoid: true },
           },
-          "after"
+          "after",
         );
       case "bulleted-list":
         return this.insertList("bulleted-list");
@@ -190,12 +190,12 @@ class BlockToolbar extends React.Component<Props> {
         {this.renderBlockButton(
           "bulleted-list",
           BulletedListIcon,
-          "Start bulleted list"
+          "Start bulleted list",
         )}
         {this.renderBlockButton(
           "ordered-list",
           OrderedListIcon,
-          "Start numbered List"
+          "Start numbered List",
         )}
         {this.renderBlockButton("todo-list", TodoListIcon, "Start checklist")}
         <Separator />
@@ -205,7 +205,7 @@ class BlockToolbar extends React.Component<Props> {
         {this.renderBlockButton(
           "horizontal-rule",
           HorizontalRuleIcon,
-          "Add break"
+          "Add break",
         )}
         {hasImageUpload &&
           this.renderBlockButton("image", ImageIcon, "Add image")}
@@ -242,15 +242,15 @@ const Bar = styled.div`
   &:after {
     content: "";
     position: absolute;
-    left: -100%;
-    width: 100%;
+    left: ${props => "-" + props.theme.padding};
+    width: ${props => props.theme.padding};
     height: 44px;
     background: ${props => props.theme.blockToolbarBackground};
   }
 
   &:after {
     left: auto;
-    right: -100%;
+    right: ${props => "-" + props.theme.padding};
   }
 
   @media print {

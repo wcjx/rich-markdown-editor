@@ -85,4 +85,6 @@ export type Theme = {
   horizontalRule: string,
 
   hiddenToolbarButtons?: HiddenToolbarButtons,
+
+  padding: string,
 };

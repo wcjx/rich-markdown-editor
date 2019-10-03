@@ -335,7 +335,7 @@ const StyledEditor = styled(Editor)`
   font-size: 1em;
   line-height: 1.7em;
   width: 100%;
-  padding: 2.7em;
+  padding: ${props => props.theme.padding};
 
   h1,
   h2,
