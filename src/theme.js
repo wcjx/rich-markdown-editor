@@ -46,7 +46,7 @@ export const base = {
   codeInserted: "#202746",
   codeImportant: "#c94922",
 
-  padding: "2.7em",
+  padding: "2.5em",
 };
 
 export const light: Theme = {

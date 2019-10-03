@@ -23,6 +23,7 @@ type Props = {
   auto?: ?boolean,
   className?: string,
   children?: React.Node,
+  padding?: string,
 };
 
 const Flex = (props: Props) => {
@@ -36,6 +37,7 @@ const Container = styled.div`
   flex-direction: ${({ column }) => (column ? "column" : "row")};
   align-items: ${({ align }) => align};
   justify-content: ${({ justify }) => justify};
+  padding: ${({ padding }) => padding};
 `;
 
 export default Flex;
