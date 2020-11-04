@@ -1,10 +1,7 @@
-import uploadPlaceholderPlugin from "../lib/uploadPlaceholder";
-
-const findPlaceholder = function(state, id) {
-  const decos = uploadPlaceholderPlugin.getState(state);
-  const found = decos.find(null, null, spec => spec.id === id);
-  return found.length ? found[0].from : null;
-};
+import uploadPlaceholderPlugin, {
+  findPlaceholder,
+} from "../lib/uploadPlaceholder";
+import { ToastType } from "../types";
 
 const insertFiles = function(view, event, pos, files, options) {
   // filter to only include image files
@@ -12,6 +9,7 @@ const insertFiles = function(view, event, pos, files, options) {
   if (images.length === 0) return;
 
   const {
+    dictionary,
     uploadImage,
     onImageUploadStart,
     onImageUploadStop,
@@ -80,10 +78,7 @@ const insertFiles = function(view, event, pos, files, options) {
 
         // let the user know
         if (onShowToast) {
-          onShowToast(
-            "Sorry, an error occurred uploading the image",
-            "image_upload_error"
-          );
+          onShowToast(dictionary.imageUploadError, ToastType.Error);
         }
       })
       // eslint-disable-next-line no-loop-func

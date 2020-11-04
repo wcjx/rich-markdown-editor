@@ -1,22 +1,25 @@
 /* global window File Promise */
 import * as React from "react";
+import memoize from "lodash/memoize";
 import { EditorState, Selection, Plugin } from "prosemirror-state";
 import { dropCursor } from "prosemirror-dropcursor";
 import { gapCursor } from "prosemirror-gapcursor";
 import { MarkdownParser, MarkdownSerializer } from "prosemirror-markdown";
 import { EditorView } from "prosemirror-view";
-import { Schema, NodeSpec, MarkSpec } from "prosemirror-model";
+import { Schema, NodeSpec, MarkSpec, Slice } from "prosemirror-model";
 import { inputRules, InputRule } from "prosemirror-inputrules";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap } from "prosemirror-commands";
 import { selectColumn, selectRow, selectTable } from "prosemirror-utils";
 import styled, { ThemeProvider } from "styled-components";
 import { light as lightTheme, dark as darkTheme } from "./theme";
+import baseDictionary from "./dictionary";
 import Flex from "./components/Flex";
 import { SearchResult } from "./components/LinkEditor";
-import { EmbedDescriptor } from "./types";
-import FloatingToolbar from "./components/FloatingToolbar";
+import { EmbedDescriptor, ToastType } from "./types";
+import SelectionToolbar from "./components/SelectionToolbar";
 import BlockMenu from "./components/BlockMenu";
+import LinkToolbar from "./components/LinkToolbar";
 import Tooltip from "./components/Tooltip";
 import Extension from "./lib/Extension";
 import ExtensionManager from "./lib/ExtensionManager";
@@ -34,10 +37,12 @@ import CodeFence from "./nodes/CodeFence";
 import CheckboxList from "./nodes/CheckboxList";
 import CheckboxItem from "./nodes/CheckboxItem";
 import Embed from "./nodes/Embed";
+import HardBreak from "./nodes/HardBreak";
 import Heading from "./nodes/Heading";
 import HorizontalRule from "./nodes/HorizontalRule";
 import Image from "./nodes/Image";
 import ListItem from "./nodes/ListItem";
+import Notice from "./nodes/Notice";
 import OrderedList from "./nodes/OrderedList";
 import Paragraph from "./nodes/Paragraph";
 import Table from "./nodes/Table";
@@ -52,6 +57,8 @@ import Highlight from "./marks/Highlight";
 import Italic from "./marks/Italic";
 import Link from "./marks/Link";
 import Strikethrough from "./marks/Strikethrough";
+import TemplatePlaceholder from "./marks/Placeholder";
+import Underline from "./marks/Underline";
 
 // plugins
 import BlockMenuTrigger from "./plugins/BlockMenuTrigger";
@@ -64,6 +71,8 @@ import MarkdownPaste from "./plugins/MarkdownPaste";
 
 export { schema, parser, serializer } from "./server";
 
+export { default as Extension } from "./lib/Extension";
+
 export const theme = lightTheme;
 
 export type Props = {
@@ -74,29 +83,43 @@ export type Props = {
   extensions: Extension[];
   autoFocus?: boolean;
   readOnly?: boolean;
+  readOnlyWriteCheckboxes?: boolean;
+  dictionary?: Partial<typeof baseDictionary>;
   dark?: boolean;
   theme?: typeof theme;
+  template?: boolean;
   headingsOffset?: number;
+  scrollTo?: string;
+  handleDOMEvents?: {
+    [name: string]: (view: EditorView, event: Event) => boolean;
+  };
   uploadImage?: (file: File) => Promise<string>;
   onSave?: ({ done: boolean }) => void;
   onCancel?: () => void;
   onChange: (value: () => string) => void;
   onImageUploadStart?: () => void;
   onImageUploadStop?: () => void;
+  onCreateLink?: (title: string) => Promise<string>;
   onSearchLink?: (term: string) => Promise<SearchResult[]>;
-  onClickLink: (href: string) => void;
-  onClickHashtag?: (tag: string) => void;
-  onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
+  onClickLink: (href: string, event: MouseEvent) => void;
+  onHoverLink?: (event: MouseEvent) => boolean;
+  onClickHashtag?: (tag: string, event: MouseEvent) => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   embeds: EmbedDescriptor[];
-  onShowToast?: (message: string) => void;
-  tooltip: typeof React.Component;
+  onShowToast?: (message: string, code: ToastType) => void;
+  tooltip: typeof React.Component | React.FC<any>;
   className?: string;
   style?: Record<string, string>;
 };
 
 type State = {
   blockMenuOpen: boolean;
+  linkMenuOpen: boolean;
   blockMenuSearch: string;
+};
+
+type Step = {
+  slice: Slice;
 };
 
 class RichMarkdownEditor extends React.PureComponent<Props, State> {
@@ -119,6 +142,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
 
   state = {
     blockMenuOpen: false,
+    linkMenuOpen: false,
     blockMenuSearch: "",
   };
 
@@ -140,7 +164,10 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
 
   componentDidMount() {
     this.init();
-    this.scrollToAnchor();
+
+    if (this.props.scrollTo) {
+      this.scrollToAnchor(this.props.scrollTo);
+    }
 
     if (this.props.readOnly) return;
 
@@ -162,6 +189,10 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
         ...this.view.props,
         editable: () => !this.props.readOnly,
       });
+    }
+
+    if (this.props.scrollTo && this.props.scrollTo !== prevProps.scrollTo) {
+      this.scrollToAnchor(this.props.scrollTo);
     }
 
     // Focus at the end of the document if switching from readOnly and autoFocus
@@ -187,19 +218,24 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
   }
 
   createExtensions() {
+    const dictionary = this.dictionary(this.props.dictionary);
+
     // adding nodes here? Update schema.ts for serialization on the server
     return new ExtensionManager(
       [
         new Doc(),
         new Text(),
+        new HardBreak(),
         new Paragraph(),
         new Blockquote(),
         new BulletList(),
         new CodeBlock({
+          dictionary,
           initialReadOnly: this.props.readOnly,
           onShowToast: this.props.onShowToast,
         }),
         new CodeFence({
+          dictionary,
           initialReadOnly: this.props.readOnly,
           onShowToast: this.props.onShowToast,
         }),
@@ -207,12 +243,17 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
         new CheckboxItem(),
         new Embed(),
         new ListItem(),
+        new Notice({
+          dictionary,
+        }),
         new Heading({
+          dictionary,
           onShowToast: this.props.onShowToast,
           offset: this.props.headingsOffset,
         }),
         new HorizontalRule(),
         new Image({
+          dictionary,
           uploadImage: this.props.uploadImage,
           onImageUploadStart: this.props.onImageUploadStart,
           onImageUploadStop: this.props.onImageUploadStop,
@@ -231,9 +272,13 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
         new Code(),
         new Highlight(),
         new Italic(),
+        new TemplatePlaceholder(),
+        new Underline(),
         new Link({
+          onKeyboardShortcut: this.handleOpenLinkMenu,
           onClickLink: this.props.onClickLink,
           onClickHashtag: this.props.onClickHashtag,
+          onHoverLink: this.props.onHoverLink,
         }),
         new Strikethrough(),
         new OrderedList(),
@@ -247,6 +292,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
           onCancel: this.props.onCancel,
         }),
         new BlockMenuTrigger({
+          dictionary,
           onOpen: this.handleOpenBlockMenu,
           onClose: this.handleCloseBlockMenu,
         }),
@@ -338,7 +384,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
       plugins: [
         ...this.plugins,
         ...this.keymaps,
-        dropCursor(),
+        dropCursor({ color: this.theme().cursor }),
         gapCursor(),
         inputRules({
           rules: this.inputRules,
@@ -357,10 +403,20 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
       throw new Error("createView called before ref available");
     }
 
+    const isEditingCheckbox = tr => {
+      return tr.steps.some(
+        (step: Step) =>
+          step.slice.content.firstChild &&
+          step.slice.content.firstChild.type.name ===
+            this.schema.nodes.checkbox_item.name
+      );
+    };
+
     const view = new EditorView(this.element, {
       state: this.createState(),
       editable: () => !this.props.readOnly,
       nodeViews: this.nodeViews,
+      handleDOMEvents: this.props.handleDOMEvents,
       dispatchTransaction: transaction => {
         const { state, transactions } = this.view.state.applyTransaction(
           transaction
@@ -371,7 +427,12 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
         // If any of the transactions being dispatched resulted in the doc
         // changing then call our own change handler to let the outside world
         // know
-        if (transactions.some(tr => tr.docChanged)) {
+        if (
+          transactions.some(tr => tr.docChanged) &&
+          (!this.props.readOnly ||
+            (this.props.readOnlyWriteCheckboxes &&
+              transactions.some(isEditingCheckbox)))
+        ) {
           this.handleChange();
         }
 
@@ -384,8 +445,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     return view;
   }
 
-  scrollToAnchor() {
-    const { hash } = window.location;
+  scrollToAnchor(hash: string) {
     if (!hash) return;
 
     try {
@@ -404,11 +464,11 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
   };
 
   handleChange = () => {
-    if (this.props.onChange && !this.props.readOnly) {
-      this.props.onChange(() => {
-        return this.value();
-      });
-    }
+    if (!this.props.onChange) return;
+
+    this.props.onChange(() => {
+      return this.value();
+    });
   };
 
   handleSave = () => {
@@ -423,6 +483,14 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     if (onSave) {
       onSave({ done: true });
     }
+  };
+
+  handleOpenLinkMenu = () => {
+    this.setState({ linkMenuOpen: true });
+  };
+
+  handleCloseLinkMenu = () => {
+    this.setState({ linkMenuOpen: false });
   };
 
   handleOpenBlockMenu = (search: string) => {
@@ -492,9 +560,26 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     return headings;
   };
 
+  theme = () => {
+    return this.props.theme || (this.props.dark ? darkTheme : lightTheme);
+  };
+
+  dictionary = memoize(
+    (providedDictionary?: Partial<typeof baseDictionary>) => {
+      return { ...baseDictionary, ...providedDictionary };
+    }
+  );
+
   render = () => {
-    const { dark, readOnly, style, tooltip, className, onKeyDown } = this.props;
-    const theme = this.props.theme || (dark ? darkTheme : lightTheme);
+    const {
+      readOnly,
+      readOnlyWriteCheckboxes,
+      style,
+      tooltip,
+      className,
+      onKeyDown,
+    } = this.props;
+    const dictionary = this.dictionary(this.props.dictionary);
 
     return (
       <Flex
@@ -505,28 +590,45 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
         justify="center"
         column
       >
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={this.theme()}>
           <React.Fragment>
             <StyledEditor
               readOnly={readOnly}
+              readOnlyWriteCheckboxes={readOnlyWriteCheckboxes}
               ref={ref => (this.element = ref)}
             />
             {!readOnly && this.view && (
               <React.Fragment>
-                <FloatingToolbar
+                <SelectionToolbar
                   view={this.view}
+                  dictionary={dictionary}
                   commands={this.commands}
+                  isTemplate={this.props.template === true}
                   onSearchLink={this.props.onSearchLink}
                   onClickLink={this.props.onClickLink}
+                  onCreateLink={this.props.onCreateLink}
+                  tooltip={tooltip}
+                />
+                <LinkToolbar
+                  view={this.view}
+                  dictionary={dictionary}
+                  isActive={this.state.linkMenuOpen}
+                  onCreateLink={this.props.onCreateLink}
+                  onSearchLink={this.props.onSearchLink}
+                  onClickLink={this.props.onClickLink}
+                  onShowToast={this.props.onShowToast}
+                  onClose={this.handleCloseLinkMenu}
                   tooltip={tooltip}
                 />
                 <BlockMenu
                   view={this.view}
                   commands={this.commands}
+                  dictionary={dictionary}
                   isActive={this.state.blockMenuOpen}
                   search={this.state.blockMenuSearch}
                   onClose={this.handleCloseBlockMenu}
                   uploadImage={this.props.uploadImage}
+                  onLinkToolbarOpen={this.handleOpenLinkMenu}
                   onImageUploadStart={this.props.onImageUploadStart}
                   onImageUploadStop={this.props.onImageUploadStop}
                   onShowToast={this.props.onShowToast}
@@ -541,7 +643,10 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
   };
 }
 
-const StyledEditor = styled("div")<{ readOnly?: boolean }>`
+const StyledEditor = styled("div")<{
+  readOnly?: boolean;
+  readOnlyWriteCheckboxes?: boolean;
+}>`
   color: ${props => props.theme.text};
   background: ${props => props.theme.background};
   font-family: ${props => props.theme.fontFamily};
@@ -581,8 +686,13 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
     }
   }
 
-  .image.placeholder img {
-    opacity: 0.5;
+  .image.placeholder {
+    position: relative;
+    background: ${props => props.theme.background};
+
+    img {
+      opacity: 0.5;
+    }
   }
 
   .ProseMirror-hideselection *::selection {
@@ -596,7 +706,8 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
   }
 
   .ProseMirror-selectednode {
-    outline: 2px solid ${props => props.theme.selected};
+    outline: 2px solid
+      ${props => (props.readOnly ? "transparent" : props.theme.selected)};
   }
 
   /* Make sure li selections wrap around markers */
@@ -634,6 +745,20 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
       font-size: 13px;
       left: -24px;
     }
+
+    &:hover {
+      .heading-anchor {
+        opacity: 1;
+      }
+    }
+  }
+
+  .heading-name {
+    color: ${props => props.theme.text};
+
+    &:hover {
+      text-decoration: none;
+    }
   }
 
   a:first-child {
@@ -668,18 +793,6 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
   }
   h6:not(.placeholder):before {
     content: "H6";
-  }
-
-  .heading-name {
-    color: ${props => props.theme.text};
-
-    &:hover {
-      text-decoration: none;
-
-      .heading-anchor {
-        opacity: 1;
-      }
-    }
   }
 
   .with-emoji {
@@ -718,6 +831,57 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
     }
   }
 
+  @media print {
+    .placeholder {
+      display: none;
+    }
+  }
+
+  .notice-block {
+    display: flex;
+    align-items: center;
+    background: ${props => props.theme.noticeInfoBackground};
+    color: ${props => props.theme.noticeInfoText};
+    border-radius: 4px;
+    padding: 8px 16px;
+    margin: 8px 0;
+
+    a {
+      color: ${props => props.theme.noticeInfoText};
+    }
+
+    a:not(.heading-name) {
+      text-decoration: underline;
+    }
+  }
+
+  .notice-block .icon {
+    width: 24px;
+    height: 24px;
+    align-self: flex-start;
+    margin-right: 4px;
+    position: relative;
+    top: 1px;
+  }
+
+  .notice-block.tip {
+    background: ${props => props.theme.noticeTipBackground};
+    color: ${props => props.theme.noticeTipText};
+
+    a {
+      color: ${props => props.theme.noticeTipText};
+    }
+  }
+
+  .notice-block.warning {
+    background: ${props => props.theme.noticeWarningBackground};
+    color: ${props => props.theme.noticeWarningText};
+
+    a {
+      color: ${props => props.theme.noticeWarningText};
+    }
+  }
+
   blockquote {
     border-left: 3px solid ${props => props.theme.quote};
     margin: 0;
@@ -728,6 +892,19 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
   b,
   strong {
     font-weight: 600;
+  }
+
+  .template-placeholder {
+    color: ${props => props.theme.placeholder};
+    border-bottom: 1px dotted ${props => props.theme.placeholder};
+    border-radius: 2px;
+    cursor: text;
+
+    &:hover {
+      border-bottom: 1px dotted
+        ${props =>
+          props.readOnly ? props.theme.placeholder : props.theme.textSecondary};
+    }
   }
 
   p {
@@ -754,6 +931,14 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
     }
   }
 
+  ol ol {
+    list-style: lower-alpha;
+  }
+
+  ol ol ol {
+    list-style: lower-roman;
+  }
+
   ul.checkbox_list {
     list-style: none;
     padding: 0;
@@ -770,8 +955,10 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
   }
 
   ul.checkbox_list li input {
-    pointer-events: ${props => (props.readOnly ? "none" : "initial")};
-    opacity: ${props => (props.readOnly ? 0.75 : 1)};
+    pointer-events: ${props =>
+      props.readOnly && !props.readOnlyWriteCheckboxes ? "none" : "initial"};
+    opacity: ${props =>
+      props.readOnly && !props.readOnlyWriteCheckboxes ? 0.75 : 1};
     margin: 0 0.5em 0 0;
     width: 14px;
     height: 14px;
@@ -801,17 +988,27 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
     background: ${props => props.theme.textHighlight};
   }
 
-  .code-block {
+  .code-block,
+  .notice-block {
     position: relative;
 
     select,
     button {
+      background: ${props => props.theme.blockToolbarBackground};
+      color: ${props => props.theme.blockToolbarItem};
+      border-width: 1px;
       font-size: 13px;
       display: none;
       position: absolute;
+      border-radius: 4px;
+      padding: 2px;
       z-index: 1;
       top: 4px;
       right: 4px;
+    }
+
+    button {
+      padding: 2px 4px;
     }
 
     &:hover {
@@ -1128,6 +1325,12 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
     }
   }
 
+  @media print {
+    .block-menu-trigger {
+      display: none;
+    }
+  }
+
   .ProseMirror-gapcursor {
     display: none;
     pointer-events: none;
@@ -1152,6 +1355,13 @@ const StyledEditor = styled("div")<{ readOnly?: boolean }>`
 
   .ProseMirror-focused .ProseMirror-gapcursor {
     display: block;
+  }
+
+  @media print {
+    em,
+    blockquote {
+      font-family: "SF Pro Text", ${props => props.theme.fontFamily};
+    }
   }
 `;
 

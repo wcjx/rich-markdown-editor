@@ -1,195 +1,171 @@
+import ResizeObserver from "resize-observer-polyfill";
 import * as React from "react";
 import { Portal } from "react-portal";
 import { EditorView } from "prosemirror-view";
 import styled from "styled-components";
-import { isEqual } from "lodash";
-import getTableColMenuItems from "../menus/tableCol";
-import getTableRowMenuItems from "../menus/tableRow";
-import getTableMenuItems from "../menus/table";
-import getFormattingMenuItems from "../menus/formatting";
-import LinkEditor, { SearchResult } from "./LinkEditor";
-import Menu from "./Menu";
-import isMarkActive from "../queries/isMarkActive";
-import getMarkRange from "../queries/getMarkRange";
-import isNodeActive from "../queries/isNodeActive";
-import getColumnIndex from "../queries/getColumnIndex";
-import getRowIndex from "../queries/getRowIndex";
-import { MenuItem } from "../types";
 
 const SSR = typeof window === "undefined";
 
 type Props = {
-  tooltip: typeof React.Component;
-  commands: Record<string, any>;
-  onSearchLink?: (term: string) => Promise<SearchResult[]>;
-  onClickLink: (url: string) => void;
+  active?: boolean;
   view: EditorView;
+  children: React.ReactNode;
+  forwardedRef?: React.RefObject<HTMLDivElement> | null;
 };
 
-const menuRef = React.createRef<HTMLDivElement>();
+const defaultPosition = {
+  left: -1000,
+  top: 0,
+  offset: 0,
+  visible: false,
+};
 
-function calculatePosition(props) {
-  const { view } = props;
+const useComponentSize = ref => {
+  const [size, setSize] = React.useState({
+    width: 0,
+    height: 0,
+  });
+
+  React.useEffect(() => {
+    const sizeObserver = new ResizeObserver(entries => {
+      entries.forEach(({ target }) => {
+        if (
+          size.width !== target.clientWidth ||
+          size.height !== target.clientHeight
+        ) {
+          setSize({ width: target.clientWidth, height: target.clientHeight });
+        }
+      });
+    });
+    sizeObserver.observe(ref.current);
+
+    return () => sizeObserver.disconnect();
+  }, [ref]);
+
+  return size;
+};
+
+function usePosition({ menuRef, isSelectingText, props }) {
+  const { view, active } = props;
   const { selection } = view.state;
+  const { width: menuWidth, height: menuHeight } = useComponentSize(menuRef);
 
-  // If there is no selection, the selection is empty or the selection is a
-  // NodeSelection instead of a TextSelection then hide the formatting
-  // toolbar offscreen
-  if (
-    !selection ||
-    !menuRef.current ||
-    selection.empty ||
-    selection.node ||
-    SSR
-  ) {
-    return {
-      left: -1000,
-      top: 0,
-      offset: 0,
-    };
+  if (!active || !menuWidth || !menuHeight || SSR || isSelectingText) {
+    return defaultPosition;
   }
 
   // based on the start and end of the selection calculate the position at
   // the center top
-  const startPos = view.coordsAtPos(selection.$from.pos);
-  const endPos = view.coordsAtPos(selection.$to.pos);
+  const fromPos = view.coordsAtPos(selection.$from.pos);
+  const toPos = view.coordsAtPos(selection.$to.pos);
+
+  // ensure that start < end for the menu to be positioned correctly
+  const selectionBounds = {
+    top: Math.min(fromPos.top, toPos.top),
+    bottom: Math.max(fromPos.bottom, toPos.bottom),
+    left: Math.min(fromPos.left, toPos.left),
+    right: Math.max(fromPos.right, toPos.right),
+  };
 
   // tables are an oddity, and need their own logic
   const isColSelection = selection.isColSelection && selection.isColSelection();
   const isRowSelection = selection.isRowSelection && selection.isRowSelection();
 
   if (isRowSelection) {
-    endPos.left = startPos.left + 12;
+    selectionBounds.right = selectionBounds.left + 12;
   } else if (isColSelection) {
     const { node: element } = view.domAtPos(selection.$from.pos);
     const { width } = element.getBoundingClientRect();
-    endPos.left = startPos.left + width;
+    selectionBounds.right = selectionBounds.left + width;
   }
 
-  const halfSelection = Math.abs(endPos.left - startPos.left) / 2;
-  const centerOfSelection = startPos.left + halfSelection;
+  // calcluate the horizontal center of the selection
+  const halfSelection =
+    Math.abs(selectionBounds.right - selectionBounds.left) / 2;
+  const centerOfSelection = selectionBounds.left + halfSelection;
 
   // position the menu so that it is centered over the selection except in
   // the cases where it would extend off the edge of the screen. In these
   // instances leave a margin
-  const { offsetWidth, offsetHeight } = menuRef.current;
   const margin = 12;
   const left = Math.min(
-    window.innerWidth - offsetWidth - margin,
-    Math.max(margin, centerOfSelection - offsetWidth / 2)
+    window.innerWidth - menuWidth - margin,
+    Math.max(margin, centerOfSelection - menuWidth / 2)
   );
   const top = Math.min(
-    window.innerHeight - offsetHeight - margin,
-    Math.max(margin, startPos.top - offsetHeight)
+    window.innerHeight - menuHeight - margin,
+    Math.max(margin, selectionBounds.top - menuHeight)
   );
 
-  // Half the width of the triangle which points below the floating menu
-  const halfTriangle = 18;
-
-  // If the menu has been offset to not extend offscreen then we should adjust
+  // if the menu has been offset to not extend offscreen then we should adjust
   // the position of the triangle underneath to correctly point to the center
   // of the selection still
-  const halfWidth = offsetWidth / 2;
-  const offset = Math.max(
-    -halfWidth + halfTriangle,
-    Math.min(halfWidth - halfTriangle, left - (centerOfSelection - halfWidth))
-  );
+  const offset = left - (centerOfSelection - menuWidth / 2);
 
   return {
-    left: left + window.scrollX,
-    top: top + window.scrollY,
-    offset,
+    left: Math.round(left + window.scrollX),
+    top: Math.round(top + window.scrollY),
+    offset: Math.round(offset),
+    visible: true,
   };
 }
 
-export default class FloatingToolbar extends React.Component<Props> {
-  state = {
-    left: 0,
-    top: 0,
-    offset: 0,
-  };
+function FloatingToolbar(props) {
+  const menuRef = props.forwardedRef || React.createRef<HTMLDivElement>();
+  const [isSelectingText, setSelectingText] = React.useState(false);
+  const position = usePosition({
+    menuRef,
+    isSelectingText,
+    props,
+  });
 
-  componentDidUpdate() {
-    const newState = calculatePosition(this.props);
+  React.useEffect(() => {
+    const handleMouseDown = () => {
+      if (!props.active) {
+        setSelectingText(true);
+      }
+    };
 
-    if (!isEqual(newState, this.state)) {
-      this.setState(newState);
-    }
-  }
+    const handleMouseUp = () => {
+      setSelectingText(false);
+    };
 
-  componentDidMount() {
-    this.setState(calculatePosition(this.props));
-  }
+    window.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mouseup", handleMouseUp);
 
-  render() {
-    const { view } = this.props;
-    const { state } = view;
-    const { selection }: { selection: any } = state;
-    const isActive = !selection.empty;
-    const isCodeSelection = isNodeActive(state.schema.nodes.code_block)(state);
+    return () => {
+      window.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [props.active]);
 
-    // toolbar is disabled in code blocks, no bold / italic etc
-    if (isCodeSelection) {
-      return null;
-    }
-
-    const colIndex = getColumnIndex(state.selection);
-    const rowIndex = getRowIndex(state.selection);
-    const isTableSelection = colIndex !== undefined && rowIndex !== undefined;
-    const link = isMarkActive(state.schema.marks.link)(state);
-    const range = getMarkRange(selection.$from, state.schema.marks.link);
-
-    let items: MenuItem[] = [];
-    if (isTableSelection) {
-      items = getTableMenuItems();
-    } else if (colIndex !== undefined) {
-      items = getTableColMenuItems(state, colIndex);
-    } else if (rowIndex !== undefined) {
-      items = getTableRowMenuItems(state, rowIndex);
-    } else {
-      items = getFormattingMenuItems(state);
-    }
-
-    if (!items.length) {
-      return null;
-    }
-
-    return (
-      <Portal>
-        <Wrapper
-          active={isActive}
-          ref={menuRef}
-          top={this.state.top}
-          left={this.state.left}
-          offset={this.state.offset}
-        >
-          {link && range ? (
-            <LinkEditor
-              mark={range.mark}
-              from={range.from}
-              to={range.to}
-              {...this.props}
-            />
-          ) : (
-            <Menu items={items} {...this.props} />
-          )}
-        </Wrapper>
-      </Portal>
-    );
-  }
+  // only render children when state is updated to visible
+  // to prevent gaining input focus before calculatePosition runs
+  return (
+    <Portal>
+      <Wrapper
+        active={props.active && position.visible}
+        ref={menuRef}
+        offset={position.offset}
+        style={{
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+        }}
+      >
+        {position.visible && props.children}
+      </Wrapper>
+    </Portal>
+  );
 }
 
 const Wrapper = styled.div<{
-  active: boolean;
-  top: number;
-  left: number;
+  active?: boolean;
   offset: number;
 }>`
+  will-change: opacity, transform;
   padding: 8px 16px;
   position: absolute;
   z-index: ${props => props.theme.zIndex + 100};
-  top: ${props => props.top}px;
-  left: ${props => props.left}px;
   opacity: 0;
   background-color: ${props => props.theme.toolbarBackground};
   border-radius: 4px;
@@ -233,3 +209,10 @@ const Wrapper = styled.div<{
     display: none;
   }
 `;
+
+export default React.forwardRef(function FloatingToolbarWithForwardedRef(
+  props: Props,
+  ref: React.RefObject<HTMLDivElement>
+) {
+  return <FloatingToolbar {...props} forwardedRef={ref} />;
+});

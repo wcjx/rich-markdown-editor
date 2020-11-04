@@ -3,7 +3,7 @@ import { Plugin } from "prosemirror-state";
 import { InputRule } from "prosemirror-inputrules";
 import Mark from "./Mark";
 
-const LINK_INPUT_REGEX = /\[(.+|:?)]\((\S+)\)/;
+const LINK_INPUT_REGEX = /\[(.+)]\((\S+)\)/;
 
 function isPlainURL(link, parent, index, side) {
   if (link.attrs.title || !/^\w+:/.test(link.attrs.href)) {
@@ -36,7 +36,7 @@ export default class Link extends Mark {
     return {
       attrs: {
         href: {
-          default: null,
+          default: "",
         },
       },
       inclusive: false,
@@ -84,7 +84,14 @@ export default class Link extends Mark {
 
   keys({ type }) {
     return {
-      "Mod-k": toggleMark(type, { href: "" }),
+      "Mod-k": (state, dispatch) => {
+        if (state.selection.empty) {
+          this.options.onKeyboardShortcut();
+          return true;
+        }
+
+        return toggleMark(type, { href: "" })(state, dispatch);
+      },
     };
   }
 
@@ -93,27 +100,46 @@ export default class Link extends Mark {
       new Plugin({
         props: {
           handleDOMEvents: {
+            mouseover: (view, event: MouseEvent) => {
+              if (
+                event.target instanceof HTMLAnchorElement &&
+                !event.target.className.includes("ProseMirror-widget")
+              ) {
+                if (this.options.onHoverLink) {
+                  return this.options.onHoverLink(event);
+                }
+              }
+              return false;
+            },
             click: (view, event: MouseEvent) => {
               // allow opening links in editing mode with the meta/cmd key
-              if (view.props.editable && !event.metaKey) {
+              if (
+                view.props.editable &&
+                view.props.editable(view.state) &&
+                !event.metaKey
+              ) {
                 return false;
               }
 
               if (event.target instanceof HTMLAnchorElement) {
-                const { href } = event.target;
+                const href =
+                  event.target.href ||
+                  (event.target.parentNode instanceof HTMLAnchorElement
+                    ? event.target.parentNode.href
+                    : "");
 
                 const isHashtag = href.startsWith("#");
                 if (isHashtag && this.options.onClickHashtag) {
                   event.stopPropagation();
                   event.preventDefault();
-                  this.options.onClickHashtag(href);
+                  this.options.onClickHashtag(href, event);
                   return true;
                 }
 
                 if (this.options.onClickLink) {
                   event.stopPropagation();
                   event.preventDefault();
-                  this.options.onClickLink(href);
+                  this.options.onClickLink(href, event);
                   return true;
                 }
               }
