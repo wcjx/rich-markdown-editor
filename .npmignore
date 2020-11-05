@@ -1,4 +1,7 @@
 src
 .test.js
 example
-flow-typed
+.circleci
+.github
+.eslintignore
+.eslintrc
