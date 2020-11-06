@@ -4,9 +4,8 @@ import memoize from "lodash/memoize";
 import { EditorState, Selection, Plugin } from "prosemirror-state";
 import { dropCursor } from "prosemirror-dropcursor";
 import { gapCursor } from "prosemirror-gapcursor";
-import { MarkdownParser, MarkdownSerializer } from "prosemirror-markdown";
 import { EditorView } from "prosemirror-view";
-import { Schema, NodeSpec, MarkSpec, Slice } from "prosemirror-model";
+import { Schema, NodeSpec, MarkSpec, Slice, Node } from "prosemirror-model";
 import { inputRules, InputRule } from "prosemirror-inputrules";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap } from "prosemirror-commands";
@@ -77,8 +76,8 @@ export const theme = lightTheme;
 
 export type Props = {
   id?: string;
-  value?: string;
-  defaultValue: string;
+  value?: { [key: string]: any };
+  defaultValue: { [key: string]: any };
   placeholder: string;
   extensions: Extension[];
   autoFocus?: boolean;
@@ -96,7 +95,7 @@ export type Props = {
   uploadImage?: (file: File) => Promise<string>;
   onSave?: ({ done: boolean }) => void;
   onCancel?: () => void;
-  onChange: (value: () => string) => void;
+  onChange: (value: () => { [key: string]: any }) => void;
   onImageUploadStart?: () => void;
   onImageUploadStop?: () => void;
   onCreateLink?: (title: string) => Promise<string>;
@@ -124,7 +123,7 @@ type Step = {
 
 class RichMarkdownEditor extends React.PureComponent<Props, State> {
   static defaultProps = {
-    defaultValue: "",
+    defaultValue: { type: "doc", content: [{ type: "paragraph" }] },
     placeholder: "Write something nice…",
     onImageUploadStart: () => {
       // no default behavior
@@ -150,8 +149,6 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
   element?: HTMLElement | null;
   view: EditorView;
   schema: Schema;
-  serializer: MarkdownSerializer;
-  parser: MarkdownParser;
   plugins: Plugin[];
   keymaps: Plugin[];
   inputRules: InputRule[];
@@ -209,8 +206,6 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     this.schema = this.createSchema();
     this.plugins = this.createPlugins();
     this.keymaps = this.createKeymaps();
-    this.serializer = this.createSerializer();
-    this.parser = this.createParser();
     this.inputRules = this.createInputRules();
     this.nodeViews = this.createNodeViews();
     this.view = this.createView();
@@ -365,17 +360,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     });
   }
 
-  createSerializer() {
-    return this.extensions.serializer();
-  }
-
-  createParser() {
-    return this.extensions.parser({
-      schema: this.schema,
-    });
-  }
-
-  createState(value?: string) {
+  createState(value?: { [key: string]: any }) {
     const doc = this.createDocument(value || this.props.defaultValue);
 
     return EditorState.create({
@@ -394,8 +379,8 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     });
   }
 
-  createDocument(content: string) {
-    return this.parser.parse(content);
+  createDocument(content: { [key: string]: any }) {
+    return Node.fromJSON(this.schema, content);
   }
 
   createView() {
@@ -459,8 +444,8 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     }
   }
 
-  value = (): string => {
-    return this.serializer.serialize(this.view.state.doc);
+  value = (): { [key: string]: any } => {
+    return this.view.state.doc.toJSON();
   };
 
   handleChange = () => {

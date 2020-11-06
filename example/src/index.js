@@ -1,8 +1,7 @@
 import * as React from "react";
 import debounce from "lodash/debounce";
 import ReactDOM from "react-dom";
-import Editor from "../../src";
-import Markdown from "../../src/serializer";
+import Editor, { parser } from "../../src";
 
 const element = document.getElementById("main");
 const savedText = localStorage.getItem("saved");
@@ -11,7 +10,8 @@ const exampleText = `
 
 This is example content. It is persisted between reloads in localStorage.
 `;
-const defaultValue = Markdown.deserialize(savedText || exampleText);
+const defaultValue =
+  JSON.parse(savedText) || parser.parse(exampleText).toJSON();
 
 const docSearchResults = [
   {
@@ -96,7 +96,7 @@ class Example extends React.Component {
   };
 
   handleChange = debounce(value => {
-    localStorage.setItem("saved", Markdown.serialize(value()));
+    localStorage.setItem("saved", JSON.stringify(value()));
   }, 250);
 
   render() {
