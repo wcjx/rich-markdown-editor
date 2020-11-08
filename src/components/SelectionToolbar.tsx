@@ -29,6 +29,7 @@ type Props = {
   onCreateLink?: (title: string) => Promise<string>;
   onShowToast?: (msg: string, code: string) => void;
   view: EditorView;
+  Toolbar: typeof Menu;
 };
 
 function isActive(props) {
@@ -97,7 +98,13 @@ export default class SelectionToolbar extends React.Component<Props> {
   };
 
   render() {
-    const { dictionary, onCreateLink, isTemplate, ...rest } = this.props;
+    const {
+      dictionary,
+      onCreateLink,
+      isTemplate,
+      Toolbar,
+      ...rest
+    } = this.props;
     const { view } = rest;
     const { state } = view;
     const { selection }: { selection: any } = state;
@@ -143,7 +150,7 @@ export default class SelectionToolbar extends React.Component<Props> {
               {...rest}
             />
           ) : (
-            <Menu items={items} {...rest} />
+            <Toolbar items={items} {...rest} />
           )}
         </FloatingToolbar>
       </Portal>

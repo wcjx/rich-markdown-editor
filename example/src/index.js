@@ -2,7 +2,7 @@ import * as React from "react";
 import debounce from "lodash/debounce";
 import ReactDOM from "react-dom";
 import Editor, { parser } from "../../src";
-
+import SelectionToolbar from "../../src/components/Menu";
 const element = document.getElementById("main");
 const savedText = localStorage.getItem("saved");
 const exampleText = `
@@ -207,6 +207,7 @@ class Example extends React.Component {
           ]}
           dark={this.state.dark}
           autoFocus
+          selectionToolbar={SelectionToolbar}
         />
       </div>
     );

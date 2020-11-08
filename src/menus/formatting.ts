@@ -59,6 +59,11 @@ export default function formattingMenuItems(
       active: isMarkActive(schema.marks.strikethrough),
     },
     {
+      name: "underline",
+      tooltip: "underline",
+      active: isMarkActive(schema.marks.underline),
+    },
+    {
       name: "mark",
       tooltip: dictionary.mark,
       icon: HighlightIcon,

@@ -179,20 +179,6 @@ const Wrapper = styled.div<{
   pointer-events: none;
   white-space: nowrap;
 
-  &::before {
-    content: "";
-    display: block;
-    width: 24px;
-    height: 24px;
-    transform: translateX(-50%) rotate(45deg);
-    background: ${props => props.theme.toolbarBackground};
-    border-radius: 3px;
-    z-index: -1;
-    position: absolute;
-    bottom: -2px;
-    left: calc(50% - ${props => props.offset || 0}px);
-  }
-
   * {
     box-sizing: border-box;
   }
@@ -200,6 +186,8 @@ const Wrapper = styled.div<{
   ${({ active }) =>
     active &&
     `
+    height: auto;
+    padding: 0px;
     transform: translateY(-6px) scale(1);
     pointer-events: all;
     opacity: 1;

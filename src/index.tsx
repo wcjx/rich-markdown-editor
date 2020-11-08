@@ -68,6 +68,8 @@ import SmartText from "./plugins/SmartText";
 import TrailingNode from "./plugins/TrailingNode";
 import MarkdownPaste from "./plugins/MarkdownPaste";
 
+import Toolbar from "./components/Menu";
+
 export { schema, parser, serializer } from "./server";
 
 export { default as Extension } from "./lib/Extension";
@@ -109,6 +111,7 @@ export type Props = {
   tooltip: typeof React.Component | React.FC<any>;
   className?: string;
   style?: Record<string, string>;
+  selectionToolbar: typeof Toolbar;
 };
 
 type State = {
@@ -563,6 +566,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
       tooltip,
       className,
       onKeyDown,
+      selectionToolbar,
     } = this.props;
     const dictionary = this.dictionary(this.props.dictionary);
 
@@ -593,6 +597,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
                   onClickLink={this.props.onClickLink}
                   onCreateLink={this.props.onCreateLink}
                   tooltip={tooltip}
+                  Toolbar={selectionToolbar}
                 />
                 <LinkToolbar
                   view={this.view}
