@@ -67,47 +67,68 @@ function usePosition({ menuRef, isSelectingText, props }) {
     right: Math.max(fromPos.right, toPos.right),
   };
 
-  // tables are an oddity, and need their own logic
+  // tables are an oddity, and need their own positioning logic
   const isColSelection = selection.isColSelection && selection.isColSelection();
   const isRowSelection = selection.isRowSelection && selection.isRowSelection();
 
-  if (isRowSelection) {
-    selectionBounds.right = selectionBounds.left + 12;
-  } else if (isColSelection) {
+  if (isColSelection) {
     const { node: element } = view.domAtPos(selection.$from.pos);
     const { width } = element.getBoundingClientRect();
+    selectionBounds.top -= 20;
     selectionBounds.right = selectionBounds.left + width;
   }
 
-  // calcluate the horizontal center of the selection
-  const halfSelection =
-    Math.abs(selectionBounds.right - selectionBounds.left) / 2;
-  const centerOfSelection = selectionBounds.left + halfSelection;
+  if (isRowSelection) {
+    selectionBounds.right = selectionBounds.left = selectionBounds.left - 18;
+  }
 
-  // position the menu so that it is centered over the selection except in
-  // the cases where it would extend off the edge of the screen. In these
-  // instances leave a margin
-  const margin = 12;
-  const left = Math.min(
-    window.innerWidth - menuWidth - margin,
-    Math.max(margin, centerOfSelection - menuWidth / 2)
-  );
-  const top = Math.min(
-    window.innerHeight - menuHeight - margin,
-    Math.max(margin, selectionBounds.top - menuHeight)
-  );
+  const isImageSelection =
+    selection.node && selection.node.type.name === "image";
+  // Images need their own positioning to get the toolbar in the center
+  if (isImageSelection) {
+    const element = view.nodeDOM(selection.from);
 
-  // if the menu has been offset to not extend offscreen then we should adjust
-  // the position of the triangle underneath to correctly point to the center
-  // of the selection still
-  const offset = left - (centerOfSelection - menuWidth / 2);
+    // Images are wrapped which impacts positioning - need to traverse through
+    // p > span > div.image
+    const imageElement = element.getElementsByTagName("img")[0];
+    const { left, top, width } = imageElement.getBoundingClientRect();
 
-  return {
-    left: Math.round(left + window.scrollX),
-    top: Math.round(top + window.scrollY),
-    offset: Math.round(offset),
-    visible: true,
-  };
+    return {
+      left: Math.round(left + width / 2 + window.scrollX - menuWidth / 2),
+      top: Math.round(top + window.scrollY - menuHeight),
+      offset: 0,
+      visible: true,
+    };
+  } else {
+    // calcluate the horizontal center of the selection
+    const halfSelection =
+      Math.abs(selectionBounds.right - selectionBounds.left) / 2;
+    const centerOfSelection = selectionBounds.left + halfSelection;
+
+    // position the menu so that it is centered over the selection except in
+    // the cases where it would extend off the edge of the screen. In these
+    // instances leave a margin
+    const margin = 12;
+    const left = Math.min(
+      window.innerWidth - menuWidth - margin,
+      Math.max(margin, centerOfSelection - menuWidth / 2)
+    );
+    const top = Math.min(
+      window.innerHeight - menuHeight - margin,
+      Math.max(margin, selectionBounds.top - menuHeight)
+    );
+
+    // if the menu has been offset to not extend offscreen then we should adjust
+    // the position of the triangle underneath to correctly point to the center
+    // of the selection still
+    const offset = left - (centerOfSelection - menuWidth / 2);
+    return {
+      left: Math.round(left + window.scrollX),
+      top: Math.round(top + window.scrollY),
+      offset: Math.round(offset),
+      visible: true,
+    };
+  }
 }
 
 function FloatingToolbar(props) {

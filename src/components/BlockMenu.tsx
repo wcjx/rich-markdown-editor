@@ -45,7 +45,7 @@ class BlockMenu extends React.Component<Props, State> {
 
   state: State = {
     left: -1000,
-    top: undefined,
+    top: 0,
     bottom: undefined,
     isAbove: false,
     selectedIndex: 0,
@@ -305,6 +305,37 @@ class BlockMenu extends React.Component<Props, State> {
     this.props.onClose();
   }
 
+  get caretPosition(): { top: number; left: number } {
+    const selection = window.document.getSelection();
+    if (!selection || !selection.anchorNode || !selection.focusNode) {
+      return {
+        top: 0,
+        left: 0,
+      };
+    }
+
+    const range = window.document.createRange();
+    range.setStart(selection.anchorNode, selection.anchorOffset);
+    range.setEnd(selection.focusNode, selection.focusOffset);
+
+    // This is a workaround for an edgecase where getBoundingClientRect will
+    // return zero values if the selection is collapsed at the start of a newline
+    // see reference here: https://stackoverflow.com/a/59780954
+    const rects = range.getClientRects();
+    if (rects.length === 0) {
+      // probably buggy newline behavior, explicitly select the node contents
+      if (range.startContainer && range.collapsed) {
+        range.selectNodeContents(range.startContainer);
+      }
+    }
+
+    const rect = range.getBoundingClientRect();
+    return {
+      top: rect.top,
+      left: rect.left,
+    };
+  }
+
   calculatePosition(props) {
     const { view } = props;
     const { selection } = view.state;
@@ -327,7 +358,8 @@ class BlockMenu extends React.Component<Props, State> {
       };
     }
 
-    const { top, left, bottom } = paragraph.node.getBoundingClientRect();
+    const { left } = this.caretPosition;
+    const { top, bottom } = paragraph.node.getBoundingClientRect();
     const margin = 24;
 
     if (startPos.top - offsetHeight > margin) {
@@ -526,8 +558,8 @@ export const Wrapper = styled.div<{
   z-index: ${props => {
     return props.theme.zIndex + 100;
   }};
-  ${props => props.top && `top: ${props.top}px`};
-  ${props => props.bottom && `bottom: ${props.bottom}px`};
+  ${props => props.top !== undefined && `top: ${props.top}px`};
+  ${props => props.bottom !== undefined && `bottom: ${props.bottom}px`};
   left: ${props => props.left}px;
   background-color: ${props => props.theme.blockToolbarBackground};
   border-radius: 4px;

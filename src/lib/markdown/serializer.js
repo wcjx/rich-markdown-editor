@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/camelcase, @typescript-eslint/no-use-before-define */
+/* eslint-disable @typescript-eslint/no-use-before-define */
 // https://raw.githubusercontent.com/ProseMirror/prosemirror-markdown/master/src/to_markdown.js
 // forked for table support
 
@@ -306,6 +306,9 @@ export class MarkdownSerializerState {
     let headerBuffer = "";
     const prevTable = this.inTable;
     this.inTable = true;
+
+    // ensure there is an empty newline above all tables
+    this.out += "\n";
 
     // rows
     node.forEach((row, _, i) => {

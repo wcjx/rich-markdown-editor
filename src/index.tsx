@@ -226,7 +226,6 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
         new HardBreak(),
         new Paragraph(),
         new Blockquote(),
-        new BulletList(),
         new CodeBlock({
           dictionary,
           initialReadOnly: this.props.readOnly,
@@ -239,6 +238,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
         }),
         new CheckboxList(),
         new CheckboxItem(),
+        new BulletList(),
         new Embed(),
         new ListItem(),
         new Notice({
@@ -664,25 +664,41 @@ const StyledEditor = styled("div")<{
     position: relative;
   }
 
-  img {
-    max-width: 100%;
-  }
-
   .image {
     text-align: center;
+    max-width: 100%;
+    clear: both;
 
     img {
       pointer-events: ${props => (props.readOnly ? "initial" : "none")};
+      display: inline-block;
+      max-width: 100%;
+      max-height: 75vh;
     }
   }
 
   .image.placeholder {
     position: relative;
     background: ${props => props.theme.background};
-
     img {
       opacity: 0.5;
     }
+  }
+
+  .image-right-50 {
+    float: right;
+    width: 50%;
+    margin-left: 2em;
+    margin-bottom: 1em;
+    clear: initial;
+  }
+
+  .image-left-50 {
+    float: left;
+    width: 50%;
+    margin-right: 2em;
+    margin-bottom: 1em;
+    clear: initial;
   }
 
   .ProseMirror-hideselection *::selection {
@@ -717,6 +733,15 @@ const StyledEditor = styled("div")<{
     pointer-events: none;
   }
 
+  .ProseMirror[contenteditable="false"] {
+    .caption {
+      pointer-events: none;
+    }
+    .caption:empty {
+      visibility: hidden;
+    }
+  }
+
   h1,
   h2,
   h3,
@@ -728,12 +753,13 @@ const StyledEditor = styled("div")<{
     cursor: default;
 
     &:not(.placeholder):before {
-      display: ${props => (props.readOnly ? "none" : "block")};
-      position: absolute;
+      display: ${props => (props.readOnly ? "none" : "inline-block")};
       font-family: ${props => props.theme.fontFamilyMono};
       color: ${props => props.theme.textSecondary};
       font-size: 13px;
-      left: -24px;
+      line-height: 0;
+      margin-left: -24px;
+      width: 24px;
     }
 
     &:hover {
@@ -742,7 +768,12 @@ const StyledEditor = styled("div")<{
       }
     }
   }
-
+  .heading-content {
+    &:before {
+      content: "​";
+      display: inline;
+    }
+  }
   .heading-name {
     color: ${props => props.theme.text};
 
@@ -764,19 +795,15 @@ const StyledEditor = styled("div")<{
 
   h1:not(.placeholder):before {
     content: "H1";
-    line-height: 3em;
   }
   h2:not(.placeholder):before {
     content: "H2";
-    line-height: 2.8em;
   }
   h3:not(.placeholder):before {
     content: "H3";
-    line-height: 2.3em;
   }
   h4:not(.placeholder):before {
     content: "H4";
-    line-height: 2.2em;
   }
   h5:not(.placeholder):before {
     content: "H5";
@@ -791,7 +818,7 @@ const StyledEditor = styled("div")<{
 
   .heading-anchor {
     opacity: 0;
-    display: ${props => (props.readOnly ? "block" : "none")};
+    display: ${props => (props.readOnly ? "inline-block" : "none")};
     color: ${props => props.theme.textSecondary};
     cursor: pointer;
     background: none;
@@ -799,11 +826,12 @@ const StyledEditor = styled("div")<{
     outline: none;
     padding: 2px 12px 2px 4px;
     margin: 0;
-    position: absolute;
     transition: opacity 100ms ease-in-out;
     font-family: ${props => props.theme.fontFamilyMono};
     font-size: 22px;
-    left: -1.3em;
+    line-height: 0;
+    margin-left: -24px;
+    width: 24px;
 
     &:focus,
     &:hover {
@@ -873,10 +901,23 @@ const StyledEditor = styled("div")<{
   }
 
   blockquote {
-    border-left: 3px solid ${props => props.theme.quote};
     margin: 0;
-    padding-left: 10px;
+    padding-left: 1em;
     font-style: italic;
+    overflow: hidden;
+    position: relative;
+
+    &:before {
+      content: "";
+      display: inline-block;
+      width: 3px;
+      border-radius: 1px;
+      position: absolute;
+      margin-left: -16px;
+      top: 0;
+      bottom: 0;
+      background: ${props => props.theme.quote};
+    }
   }
 
   b,
@@ -898,7 +939,6 @@ const StyledEditor = styled("div")<{
   }
 
   p {
-    position: relative;
     margin: 0;
   }
 
@@ -913,7 +953,7 @@ const StyledEditor = styled("div")<{
   ul,
   ol {
     margin: 0 0.1em;
-    padding: 0 0 0 1em;
+    padding: 0 0 0 1.2em;
 
     ul,
     ol {
@@ -956,6 +996,7 @@ const StyledEditor = styled("div")<{
 
   li p:first-child {
     margin: 0;
+    word-break: break-word;
   }
 
   hr {
@@ -1155,6 +1196,11 @@ const StyledEditor = styled("div")<{
     border-collapse: collapse;
     border-radius: 4px;
     margin-top: 1em;
+    box-sizing: border-box;
+
+    * {
+      box-sizing: border-box;
+    }
 
     tr {
       position: relative;
@@ -1179,74 +1225,91 @@ const StyledEditor = styled("div")<{
     .selectedCell {
       background: ${props =>
         props.readOnly ? "inherit" : props.theme.tableSelectedBackground};
+
+      /* fixes Firefox background color painting over border:
+       * https://bugzilla.mozilla.org/show_bug.cgi?id=688556 */
+      background-clip: padding-box;
     }
 
     .grip-column {
-      cursor: pointer;
-      position: absolute;
-      top: -16px;
-      left: 0;
-      width: 100%;
-      height: 12px;
-      background: ${props => props.theme.tableDivider};
-      border-bottom: 3px solid ${props => props.theme.background};
-      display: ${props => (props.readOnly ? "none" : "block")};
+      /* usage of ::after for all of the table grips works around a bug in
+       * prosemirror-tables that causes Safari to hang when selecting a cell
+       * in an empty table:
+       * https://github.com/ProseMirror/prosemirror/issues/947 */
+      &::after {
+        content: "";
+        cursor: pointer;
+        position: absolute;
+        top: -16px;
+        left: 0;
+        width: 100%;
+        height: 12px;
+        background: ${props => props.theme.tableDivider};
+        border-bottom: 3px solid ${props => props.theme.background};
+        display: ${props => (props.readOnly ? "none" : "block")};
+      }
 
-      &:hover {
+      &:hover::after {
         background: ${props => props.theme.text};
       }
-      &.first {
+      &.first::after {
         border-top-left-radius: 3px;
       }
-      &.last {
+      &.last::after {
         border-top-right-radius: 3px;
       }
-      &.selected {
+      &.selected::after {
         background: ${props => props.theme.tableSelected};
       }
     }
 
     .grip-row {
-      cursor: pointer;
-      position: absolute;
-      left: -16px;
-      top: 0;
-      height: 100%;
-      width: 12px;
-      background: ${props => props.theme.tableDivider};
-      border-right: 3px solid ${props => props.theme.background};
-      display: ${props => (props.readOnly ? "none" : "block")};
+      &::after {
+        content: "";
+        cursor: pointer;
+        position: absolute;
+        left: -16px;
+        top: 0;
+        height: 100%;
+        width: 12px;
+        background: ${props => props.theme.tableDivider};
+        border-right: 3px solid ${props => props.theme.background};
+        display: ${props => (props.readOnly ? "none" : "block")};
+      }
 
-      &:hover {
+      &:hover::after {
         background: ${props => props.theme.text};
       }
-      &.first {
+      &.first::after {
         border-top-left-radius: 3px;
       }
-      &.last {
+      &.last::after {
         border-bottom-left-radius: 3px;
       }
-      &.selected {
+      &.selected::after {
         background: ${props => props.theme.tableSelected};
       }
     }
 
     .grip-table {
-      cursor: pointer;
-      background: ${props => props.theme.tableDivider};
-      width: 13px;
-      height: 13px;
-      border-radius: 13px;
-      border: 2px solid ${props => props.theme.background};
-      position: absolute;
-      top: -18px;
-      left: -18px;
-      display: ${props => (props.readOnly ? "none" : "block")};
+      &::after {
+        content: "";
+        cursor: pointer;
+        background: ${props => props.theme.tableDivider};
+        width: 13px;
+        height: 13px;
+        border-radius: 13px;
+        border: 2px solid ${props => props.theme.background};
+        position: absolute;
+        top: -18px;
+        left: -18px;
+        display: ${props => (props.readOnly ? "none" : "block")};
+      }
 
-      &:hover {
+      &:hover::after {
         background: ${props => props.theme.text};
       }
-      &.selected {
+      &.selected::after {
         background: ${props => props.theme.tableSelected};
       }
     }
@@ -1255,11 +1318,38 @@ const StyledEditor = styled("div")<{
   .scrollable-wrapper {
     position: relative;
     margin: 0.5em 0px;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+
+    &:hover {
+      scrollbar-color: ${props => props.theme.scrollbarThumb}
+        ${props => props.theme.scrollbarBackground};
+    }
+
+    & ::-webkit-scrollbar {
+      height: 14px;
+      background-color: transparent;
+    }
+
+    &:hover ::-webkit-scrollbar {
+      background-color: ${props => props.theme.scrollbarBackground};
+    }
+
+    & ::-webkit-scrollbar-thumb {
+      background-color: transparent;
+      border: 3px solid transparent;
+      border-radius: 7px;
+    }
+
+    &:hover ::-webkit-scrollbar-thumb {
+      background-color: ${props => props.theme.scrollbarThumb};
+      border-color: ${props => props.theme.scrollbarBackground};
+    }
   }
 
   .scrollable {
     overflow-y: hidden;
-    overflow-x: scroll;
+    overflow-x: auto;
     padding-left: 1em;
     margin-left: -1em;
     border-left: 1px solid transparent;
@@ -1291,7 +1381,7 @@ const StyledEditor = styled("div")<{
   }
 
   .block-menu-trigger {
-    display: ${props => (props.readOnly ? "none" : "block")};
+    display: ${props => (props.readOnly ? "none" : "inline")};
     height: 1em;
     color: ${props => props.theme.textSecondary};
     background: none;
@@ -1303,9 +1393,9 @@ const StyledEditor = styled("div")<{
       transform 150ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
     outline: none;
     border: 0;
-    line-height: 1;
-    margin-top: -6px;
-    left: -34px;
+    line-height: 26px;
+    margin-top: -2px;
+    margin-left: -28px;
 
     &:hover,
     &:focus {

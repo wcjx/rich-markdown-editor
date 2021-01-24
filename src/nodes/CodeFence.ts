@@ -3,6 +3,7 @@ import bash from "refractor/lang/bash";
 import css from "refractor/lang/css";
 import clike from "refractor/lang/clike";
 import csharp from "refractor/lang/csharp";
+import go from "refractor/lang/go";
 import java from "refractor/lang/java";
 import javascript from "refractor/lang/javascript";
 import json from "refractor/lang/json";
@@ -11,6 +12,7 @@ import php from "refractor/lang/php";
 import python from "refractor/lang/python";
 import powershell from "refractor/lang/powershell";
 import ruby from "refractor/lang/ruby";
+import sql from "refractor/lang/sql";
 import typescript from "refractor/lang/typescript";
 
 import { setBlockType } from "prosemirror-commands";
@@ -25,6 +27,7 @@ import { ToastType } from "../types";
   css,
   clike,
   csharp,
+  go,
   java,
   javascript,
   json,
@@ -33,6 +36,7 @@ import { ToastType } from "../types";
   python,
   powershell,
   ruby,
+  sql,
   typescript,
 ].forEach(refractor.register);
 
@@ -64,9 +68,9 @@ export default class CodeFence extends Node {
           tag: ".code-block",
           preserveWhitespace: "full",
           contentElement: "code",
-          getAttrs: node => {
+          getAttrs: (dom: HTMLDivElement) => {
             return {
-              language: node.dataset.language,
+              language: dom.dataset.language,
             };
           },
         },

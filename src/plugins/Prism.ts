@@ -10,6 +10,7 @@ export const LANGUAGES = {
   css: "CSS",
   clike: "C",
   csharp: "C#",
+  go: "Go",
   markup: "HTML",
   java: "Java",
   javascript: "JavaScript",
@@ -18,6 +19,7 @@ export const LANGUAGES = {
   powershell: "Powershell",
   python: "Python",
   ruby: "Ruby",
+  sql: "SQL",
   typescript: "TypeScript",
 };
 
@@ -52,11 +54,7 @@ function getDecorations({ doc, name }) {
   blocks.forEach(block => {
     let startPos = block.pos + 1;
     const language = block.node.attrs.language;
-    if (
-      !language ||
-      language === "none" ||
-      !Object.keys(LANGUAGES).includes(language)
-    ) {
+    if (!language || language === "none" || !refractor.registered(language)) {
       return;
     }
 

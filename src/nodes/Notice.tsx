@@ -29,7 +29,20 @@ export default class Notice extends Node {
       group: "block",
       defining: true,
       draggable: true,
-      parseDOM: [{ tag: "div.notice-block", preserveWhitespace: "full" }],
+      parseDOM: [
+        {
+          tag: "div.notice-block",
+          preserveWhitespace: "full",
+          contentElement: "div:last-child",
+          getAttrs: (dom: HTMLDivElement) => ({
+            style: dom.className.includes("tip")
+              ? "tip"
+              : dom.className.includes("warning")
+              ? "warning"
+              : undefined,
+          }),
+        },
+      ],
       toDOM: node => {
         const select = document.createElement("select");
         select.addEventListener("change", this.handleStyleChange);

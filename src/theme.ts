@@ -80,6 +80,9 @@ export const light = {
   codeBorder: colors.grey,
   horizontalRule: colors.greyMid,
   imageErrorBackground: colors.greyLight,
+
+  scrollbarBackground: colors.greyLight,
+  scrollbarThumb: colors.greyMid,
 };
 
 export const dark = {
@@ -110,6 +113,9 @@ export const dark = {
   codeString: "#3d8fd1",
   horizontalRule: colors.lightBlack,
   imageErrorBackground: "rgba(0, 0, 0, 0.5)",
+
+  scrollbarBackground: colors.black,
+  scrollbarThumb: colors.lightBlack,
 };
 
 export default light;
