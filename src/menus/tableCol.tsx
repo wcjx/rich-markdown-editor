@@ -1,11 +1,9 @@
-import {
-  TrashIcon,
-  AlignLeftIcon,
-  AlignRightIcon,
-  AlignCenterIcon,
-  InsertLeftIcon,
-  InsertRightIcon,
-} from "outline-icons";
+import TrashIcon from '@material-ui/icons/Delete'
+import AlignLeftIcon from '@material-ui/icons/FormatAlignLeft'
+import AlignRightIcon from '@material-ui/icons/FormatAlignRight'
+import AlignCenterIcon from '@material-ui/icons/FormatAlignCenter'
+import InsertLeftIcon from '@material-ui/icons/KeyboardArrowLeft'
+import InsertRightIcon from '@material-ui/icons/KeyboardArrowRight'
 import { EditorState } from "prosemirror-state";
 import isNodeActive from "../queries/isNodeActive";
 import { MenuItem } from "../types";

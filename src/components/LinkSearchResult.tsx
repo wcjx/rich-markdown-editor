@@ -1,6 +1,7 @@
 import * as React from "react";
 import scrollIntoView from "smooth-scroll-into-view-if-needed";
 import styled from "styled-components";
+import DocumentIcon from '@material-ui/icons/InsertDriveFile'
 
 type Props = {
   onClick: (event: React.MouseEvent) => void;
@@ -32,7 +33,9 @@ function LinkSearchResult({ title, subtitle, selected, icon, ...rest }: Props) {
 
   return (
     <ListItem ref={ref} compact={!subtitle} selected={selected} {...rest}>
-      <IconWrapper>{icon}</IconWrapper>
+      <IconWrapper>
+        <DocumentIcon color={selected ? "primary" : "action"} />
+      </IconWrapper>
       <div>
         <Title>{title}</Title>
         {subtitle ? <Subtitle selected={selected}>{subtitle}</Subtitle> : null}
@@ -44,7 +47,6 @@ function LinkSearchResult({ title, subtitle, selected, icon, ...rest }: Props) {
 const IconWrapper = styled.span`
   flex-shrink: 0;
   margin-right: 4px;
-  opacity: 0.8;
 `;
 
 const ListItem = styled.li<{
@@ -57,7 +59,7 @@ const ListItem = styled.li<{
   border-radius: 2px;
   color: ${props => props.theme.toolbarItem};
   background: ${props =>
-    props.selected ? props.theme.toolbarHoverBackground : "transparent"};
+    props.selected ? "rgba(0, 0, 0, 0.08)" : "transparent"};
   font-family: ${props => props.theme.fontFamily};
   text-decoration: none;
   overflow: hidden;

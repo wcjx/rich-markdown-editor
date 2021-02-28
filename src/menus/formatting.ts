@@ -1,15 +1,14 @@
-import {
-  BoldIcon,
-  CodeIcon,
-  Heading1Icon,
-  Heading2Icon,
-  ItalicIcon,
-  BlockQuoteIcon,
-  LinkIcon,
-  StrikethroughIcon,
-  InputIcon,
-  HighlightIcon,
-} from "outline-icons";
+import BoldIcon from '@material-ui/icons/FormatBold'
+import Heading1Icon from '@material-ui/icons/Title'
+import BlockQuoteIcon from '@material-ui/icons/FormatQuote'
+import CodeIcon from '@material-ui/icons/Code'
+import ItalicIcon from '@material-ui/icons/FormatItalic'
+import LinkIcon from '@material-ui/icons/Link'
+import StrikethroughIcon from '@material-ui/icons/StrikethroughS'
+import InputIcon from '@material-ui/icons/Input'
+import HighlightIcon from '@material-ui/icons/Highlight'
+import CommentIcon from "@material-ui/icons/ModeComment";
+import RelationIcon from "@material-ui/icons/CallReceived";
 import { isInTable } from "prosemirror-tables";
 import { EditorState } from "prosemirror-state";
 import isInList from "../queries/isInList";
@@ -63,47 +62,39 @@ export default function formattingMenuItems(
       tooltip: "underline",
       active: isMarkActive(schema.marks.underline),
     },
-    {
-      name: "mark",
-      tooltip: dictionary.mark,
-      icon: HighlightIcon,
-      active: isMarkActive(schema.marks.mark),
-      visible: !isTemplate,
-    },
+    // {
+    //   name: "mark",
+    //   tooltip: dictionary.mark,
+    //   icon: HighlightIcon,
+    //   active: isMarkActive(schema.marks.mark),
+    //   visible: !isTemplate,
+    // },
     {
       name: "code_inline",
       tooltip: dictionary.codeInline,
       icon: CodeIcon,
       active: isMarkActive(schema.marks.code_inline),
     },
-    {
-      name: "separator",
-      visible: allowBlocks,
-    },
-    {
-      name: "heading",
-      tooltip: dictionary.heading,
-      icon: Heading1Icon,
-      active: isNodeActive(schema.nodes.heading, { level: 1 }),
-      attrs: { level: 1 },
-      visible: allowBlocks,
-    },
-    {
-      name: "heading",
-      tooltip: dictionary.subheading,
-      icon: Heading2Icon,
-      active: isNodeActive(schema.nodes.heading, { level: 2 }),
-      attrs: { level: 2 },
-      visible: allowBlocks,
-    },
-    {
-      name: "blockquote",
-      tooltip: dictionary.quote,
-      icon: BlockQuoteIcon,
-      active: isNodeActive(schema.nodes.blockquote),
-      attrs: { level: 2 },
-      visible: allowBlocks,
-    },
+    // {
+    //   name: "separator",
+    //   visible: allowBlocks,
+    // },
+    // {
+    //   name: "heading",
+    //   tooltip: dictionary.heading,
+    //   icon: Heading1Icon,
+    //   active: isNodeActive(schema.nodes.heading, { level: 1 }),
+    //   attrs: { level: 1 },
+    //   visible: allowBlocks,
+    // },
+    // {
+    //   name: "blockquote",
+    //   tooltip: dictionary.quote,
+    //   icon: BlockQuoteIcon,
+    //   active: isNodeActive(schema.nodes.blockquote),
+    //   attrs: { level: 2 },
+    //   visible: allowBlocks,
+    // },
     {
       name: "separator",
     },
@@ -113,6 +104,16 @@ export default function formattingMenuItems(
       icon: LinkIcon,
       active: isMarkActive(schema.marks.link),
       attrs: { href: "" },
+    },
+    {
+      name: "annotation",
+      tooltip: "annotation",
+      icon: CommentIcon,
+    },
+    {
+      name: "Relate",
+      tooltip: "relate",
+      icon: RelationIcon,
     },
   ];
 }

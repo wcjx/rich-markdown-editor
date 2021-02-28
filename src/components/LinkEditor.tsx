@@ -2,13 +2,13 @@ import * as React from "react";
 import { setTextSelection } from "prosemirror-utils";
 import { EditorView } from "prosemirror-view";
 import { Mark } from "prosemirror-model";
-import {
-  DocumentIcon,
-  CloseIcon,
-  PlusIcon,
-  TrashIcon,
-  OpenIcon,
-} from "outline-icons";
+import DocumentIcon from '@material-ui/icons/InsertDriveFile'
+import CloseIcon from '@material-ui/icons/Close'
+import PlusIcon from '@material-ui/icons/Add'
+import TrashIcon from '@material-ui/icons/Delete'
+import OpenIcon from '@material-ui/icons/OpenInNew'
+import Paper from '@material-ui/core/Paper'
+import { withStyles, Theme, createStyles } from '@material-ui/core/styles';
 import styled, { withTheme } from "styled-components";
 import isUrl from "../lib/isUrl";
 import theme from "../theme";
@@ -277,11 +277,11 @@ class LinkEditor extends React.Component<Props, State> {
 
     const suggestedLinkTitle = this.suggestedLinkTitle;
 
-    const showCreateLink =
-      !!this.props.onCreateLink &&
-      !(suggestedLinkTitle === this.initialValue) &&
-      suggestedLinkTitle.length > 0 &&
-      !looksLikeUrl;
+    const showCreateLink = false;
+      // !!this.props.onCreateLink &&
+      // !(suggestedLinkTitle === this.initialValue) &&
+      // suggestedLinkTitle.length > 0 &&
+      // !looksLikeUrl;
 
     const showResults =
       !!suggestedLinkTitle && (showCreateLink || results.length > 0);
@@ -302,27 +302,27 @@ class LinkEditor extends React.Component<Props, State> {
 
         <ToolbarButton onClick={this.handleOpenLink} disabled={!value}>
           <Tooltip tooltip={dictionary.openLink} placement="top">
-            <OpenIcon color={theme.toolbarItem} />
+            <OpenIcon  />
           </Tooltip>
         </ToolbarButton>
         <ToolbarButton onClick={this.handleRemoveLink}>
           <Tooltip tooltip={dictionary.removeLink} placement="top">
             {this.initialValue ? (
-              <TrashIcon color={theme.toolbarItem} />
+              <TrashIcon  />
             ) : (
-              <CloseIcon color={theme.toolbarItem} />
+              <CloseIcon  />
             )}
           </Tooltip>
         </ToolbarButton>
 
         {showResults && (
-          <SearchResults id="link-search-results">
+          <MyPaper id="link-search-results" component="ol" elevation={4}>
             {results.map((result, index) => (
               <LinkSearchResult
                 key={result.url}
                 title={result.title}
                 subtitle={result.subtitle}
-                icon={<DocumentIcon color={theme.toolbarItem} />}
+                icon={<DocumentIcon  />}
                 onMouseOver={() => this.handleFocusLink(index)}
                 onClick={this.handleSelectLink(result.url, result.title)}
                 selected={index === selectedIndex}
@@ -334,7 +334,7 @@ class LinkEditor extends React.Component<Props, State> {
                 key="create"
                 title={suggestedLinkTitle}
                 subtitle={dictionary.createNewDoc}
-                icon={<PlusIcon color={theme.toolbarItem} />}
+                icon={<PlusIcon  />}
                 onMouseOver={() => this.handleFocusLink(results.length)}
                 onClick={() => {
                   this.handleCreateLink(suggestedLinkTitle);
@@ -346,7 +346,7 @@ class LinkEditor extends React.Component<Props, State> {
                 selected={results.length === selectedIndex}
               />
             )}
-          </SearchResults>
+          </MyPaper>
         )}
       </Wrapper>
     );
@@ -359,20 +359,21 @@ const Wrapper = styled(Flex)`
   min-width: 336px;
 `;
 
-const SearchResults = styled.ol`
-  background: ${props => props.theme.toolbarBackground};
-  position: absolute;
-  top: 100%;
-  width: 100%;
-  height: auto;
-  left: 0;
-  padding: 4px 8px 8px;
-  margin: 0;
-  margin-top: -3px;
-  margin-bottom: 0;
-  border-radius: 0 0 4px 4px;
-  overflow-y: auto;
-  max-height: 25vh;
-`;
+const MyPaper = withStyles((theme:Theme)=>createStyles({
+  root: {
+    position: "absolute",
+    top: "100%",
+    width: "100%",
+    height: "auto",
+    left: 0,
+    padding: "4px 0px 8px",
+    margin: 0,
+    marginTop: "-3px",
+    marginBottom: 0,
+    borderRadius: "0 0 4px 4px",
+    overflowY: "auto",
+    maxHeight: "25vh",
+  },
+}))(Paper);
 
 export default withTheme(LinkEditor);

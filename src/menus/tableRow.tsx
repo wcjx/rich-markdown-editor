@@ -1,5 +1,7 @@
 import { EditorState } from "prosemirror-state";
-import { TrashIcon, InsertAboveIcon, InsertBelowIcon } from "outline-icons";
+import TrashIcon from '@material-ui/icons/Delete'
+import InsertAboveIcon from '@material-ui/icons/KeyboardArrowUp'
+import InsertBelowIcon from '@material-ui/icons/KeyboardArrowDown'
 import { MenuItem } from "../types";
 import baseDictionary from "../dictionary";
 

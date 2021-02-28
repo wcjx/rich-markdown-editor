@@ -22,6 +22,7 @@ type Props = {
   view: EditorView;
   search: string;
   uploadImage?: (file: File) => Promise<string>;
+  importNode?: (pointer:string) => Promise<any>;
   onImageUploadStart?: () => void;
   onImageUploadStop?: () => void;
   onShowToast?: (message: string, id: string) => void;
@@ -162,6 +163,33 @@ class BlockMenu extends React.Component<Props, State> {
         this.props.onLinkToolbarOpen();
         return;
       }
+      case "import":
+        this.clearSearch();
+        this.props.onClose();
+        const selection = this.props.view.state.selection;
+        let pointer = "";
+        for (let i = 0; i < selection.$cursor.depth + 1; i++) {
+          pointer = pointer + "/content/" + selection.$from.index(i);
+        }
+        this.props.importNode!(pointer).then((result) => {
+          switch (result.type) {
+            case "text":
+              const transaction = this.props.view.state.tr.insertText(result.body);
+              this.props.view.dispatch(transaction);
+              break;
+            case "image":
+              this.insertBlock({
+                name: "image",
+                attrs: {
+                  src: result.body.path,
+                  alt: result.body.name,
+                },
+              });
+            default:
+              break;
+          }
+        });
+        return;
       default:
         this.insertBlock(item);
     }

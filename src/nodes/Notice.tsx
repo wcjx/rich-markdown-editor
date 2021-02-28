@@ -1,7 +1,9 @@
 import { wrappingInputRule } from "prosemirror-inputrules";
 import toggleWrap from "../commands/toggleWrap";
-import { WarningIcon, InfoIcon, StarredIcon } from "outline-icons";
 import * as React from "react";
+import WarningIcon from '@material-ui/icons/Warning'
+import InfoIcon from '@material-ui/icons/Info'
+import StarredIcon from '@material-ui/icons/NewReleases'
 import ReactDOM from "react-dom";
 import Node from "./Node";
 
@@ -58,11 +60,11 @@ export default class Notice extends Node {
         let component;
 
         if (node.attrs.style === "tip") {
-          component = <StarredIcon color="currentColor" />;
+          component = <StarredIcon  />;
         } else if (node.attrs.style === "warning") {
-          component = <WarningIcon color="currentColor" />;
+          component = <WarningIcon  />;
         } else {
-          component = <InfoIcon color="currentColor" />;
+          component = <InfoIcon  />;
         }
 
         const icon = document.createElement("div");

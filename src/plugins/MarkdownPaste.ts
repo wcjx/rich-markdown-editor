@@ -3,6 +3,7 @@ import { toggleMark } from "prosemirror-commands";
 import Extension from "../lib/Extension";
 import isUrl from "../lib/isUrl";
 import isInCode from "../queries/isInCode";
+import { parser } from "../index";
 
 export default class MarkdownPaste extends Extension {
   get name() {
@@ -75,7 +76,7 @@ export default class MarkdownPaste extends Extension {
               return true;
             }
 
-            const paste = this.editor.parser.parse(text);
+            const paste = parser.parse(text);
             const slice = paste.slice(0);
 
             const transaction = view.state.tr.replaceSelection(slice);

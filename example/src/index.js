@@ -2,7 +2,7 @@ import * as React from "react";
 import debounce from "lodash/debounce";
 import ReactDOM from "react-dom";
 import Editor, { parser } from "../../src";
-import SelectionToolbar from "../../src/components/Menu";
+import Annotation from '../../src/plugins/Anotation'
 const element = document.getElementById("main");
 const savedText = localStorage.getItem("saved");
 const exampleText = `
@@ -10,6 +10,7 @@ const exampleText = `
 
 This is example content. It is persisted between reloads in localStorage.
 `;
+const exampleValue = parser.parse(exampleText).toJSON();
 const defaultValue =
   JSON.parse(savedText) || parser.parse(exampleText).toJSON();
 
@@ -96,7 +97,8 @@ class Example extends React.Component {
   };
 
   handleChange = debounce(value => {
-    localStorage.setItem("saved", JSON.stringify(value()));
+    console.log(value());
+    localStorage.setItem("saved", JSON.stringify(value().state.doc.toJSON()));
   }, 250);
 
   render() {
@@ -186,6 +188,13 @@ class Example extends React.Component {
               setTimeout(() => resolve("https://picsum.photos/600/600"), 1500);
             });
           }}
+          importNode={(pointer) => {
+            console.log("Import at: "+pointer);
+            // Delay to simulate time taken to upload
+            return new Promise(resolve => {
+              setTimeout(() => resolve({type:'text',body:'test import'}), 500);
+            });
+          }}
           embeds={[
             {
               title: "YouTube",
@@ -207,7 +216,7 @@ class Example extends React.Component {
           ]}
           dark={this.state.dark}
           autoFocus
-          selectionToolbar={SelectionToolbar}
+          extensions={[new Annotation()]}
         />
       </div>
     );

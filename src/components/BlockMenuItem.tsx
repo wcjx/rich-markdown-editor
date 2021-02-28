@@ -47,7 +47,7 @@ function BlockMenuItem({
       onClick={disabled ? undefined : onClick}
       ref={ref}
     >
-      <Icon color={selected ? theme.black : undefined} />
+      <Icon color={selected ? "primary" : "action"} />
       &nbsp;&nbsp;{title}
       <Shortcut>{shortcut}</Shortcut>
     </MenuItem>
@@ -67,7 +67,6 @@ const MenuItem = styled.button<{
   height: 36px;
   cursor: pointer;
   border: none;
-  opacity: ${props => (props.disabled ? ".5" : "1")};
   color: ${props =>
     props.selected ? props.theme.black : props.theme.blockToolbarText};
   background: ${props =>

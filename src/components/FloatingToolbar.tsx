@@ -3,7 +3,21 @@ import * as React from "react";
 import { Portal } from "react-portal";
 import { EditorView } from "prosemirror-view";
 import styled from "styled-components";
+import Paper from "@material-ui/core/Paper";
+import { makeStyles, Theme, createStyles } from "@material-ui/core/styles";
 
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      display: "flex",
+      justifyContent: "left",
+      flexWrap: "nowrap",
+      listStyle: "none",
+      margin: 0,
+      padding: theme.spacing(1),
+    },
+  }),
+);
 const SSR = typeof window === "undefined";
 
 type Props = {
@@ -20,19 +34,16 @@ const defaultPosition = {
   visible: false,
 };
 
-const useComponentSize = ref => {
+const useComponentSize = (ref) => {
   const [size, setSize] = React.useState({
     width: 0,
     height: 0,
   });
 
   React.useEffect(() => {
-    const sizeObserver = new ResizeObserver(entries => {
+    const sizeObserver = new ResizeObserver((entries) => {
       entries.forEach(({ target }) => {
-        if (
-          size.width !== target.clientWidth ||
-          size.height !== target.clientHeight
-        ) {
+        if (size.width !== target.clientWidth || size.height !== target.clientHeight) {
           setSize({ width: target.clientWidth, height: target.clientHeight });
         }
       });
@@ -82,8 +93,7 @@ function usePosition({ menuRef, isSelectingText, props }) {
     selectionBounds.right = selectionBounds.left = selectionBounds.left - 18;
   }
 
-  const isImageSelection =
-    selection.node && selection.node.type.name === "image";
+  const isImageSelection = selection.node && selection.node.type.name === "image";
   // Images need their own positioning to get the toolbar in the center
   if (isImageSelection) {
     const element = view.nodeDOM(selection.from);
@@ -101,8 +111,7 @@ function usePosition({ menuRef, isSelectingText, props }) {
     };
   } else {
     // calcluate the horizontal center of the selection
-    const halfSelection =
-      Math.abs(selectionBounds.right - selectionBounds.left) / 2;
+    const halfSelection = Math.abs(selectionBounds.right - selectionBounds.left) / 2;
     const centerOfSelection = selectionBounds.left + halfSelection;
 
     // position the menu so that it is centered over the selection except in
@@ -111,11 +120,11 @@ function usePosition({ menuRef, isSelectingText, props }) {
     const margin = 12;
     const left = Math.min(
       window.innerWidth - menuWidth - margin,
-      Math.max(margin, centerOfSelection - menuWidth / 2)
+      Math.max(margin, centerOfSelection - menuWidth / 2),
     );
     const top = Math.min(
       window.innerHeight - menuHeight - margin,
-      Math.max(margin, selectionBounds.top - menuHeight)
+      Math.max(margin, selectionBounds.top - menuHeight),
     );
 
     // if the menu has been offset to not extend offscreen then we should adjust
@@ -132,6 +141,7 @@ function usePosition({ menuRef, isSelectingText, props }) {
 }
 
 function FloatingToolbar(props) {
+  const classes = useStyles();
   const menuRef = props.forwardedRef || React.createRef<HTMLDivElement>();
   const [isSelectingText, setSelectingText] = React.useState(false);
   const position = usePosition({
@@ -173,7 +183,9 @@ function FloatingToolbar(props) {
           left: `${position.left}px`,
         }}
       >
-        {position.visible && props.children}
+        <Paper className={classes.root} elevation={4}>
+          {position.visible && props.children}
+        </Paper>
       </Wrapper>
     </Portal>
   );
@@ -186,9 +198,9 @@ const Wrapper = styled.div<{
   will-change: opacity, transform;
   padding: 8px 16px;
   position: absolute;
-  z-index: ${props => props.theme.zIndex + 100};
+  z-index: ${(props) => props.theme.zIndex + 100};
   opacity: 0;
-  background-color: ${props => props.theme.toolbarBackground};
+  background-color: ${(props) => props.theme.toolbarBackground};
   border-radius: 4px;
   transform: scale(0.95);
   transition: opacity 150ms cubic-bezier(0.175, 0.885, 0.32, 1.275),
@@ -221,7 +233,7 @@ const Wrapper = styled.div<{
 
 export default React.forwardRef(function FloatingToolbarWithForwardedRef(
   props: Props,
-  ref: React.RefObject<HTMLDivElement>
+  ref: React.RefObject<HTMLDivElement>,
 ) {
   return <FloatingToolbar {...props} forwardedRef={ref} />;
 });

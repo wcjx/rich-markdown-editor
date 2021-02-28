@@ -1,20 +1,13 @@
-import {
-  BlockQuoteIcon,
-  BulletedListIcon,
-  CodeIcon,
-  Heading1Icon,
-  Heading2Icon,
-  Heading3Icon,
-  HorizontalRuleIcon,
-  OrderedListIcon,
-  TableIcon,
-  TodoListIcon,
-  ImageIcon,
-  StarredIcon,
-  WarningIcon,
-  InfoIcon,
-  LinkIcon,
-} from "outline-icons";
+import TitleIcon from '@material-ui/icons/Title'
+import TodoListIcon from '@material-ui/icons/List'
+import BlockQuoteIcon from '@material-ui/icons/FormatQuote'
+import BulletedListIcon from '@material-ui/icons/FormatListBulleted'
+import TableIcon from '@material-ui/icons/TableChart'
+import CodeIcon from '@material-ui/icons/Code'
+import HorizontalRuleIcon from '@material-ui/icons/HorizontalSplit'
+import OrderedListIcon from '@material-ui/icons/FormatListNumbered'
+import ImageIcon from '@material-ui/icons/Image'
+import ImportIcon from '@material-ui/icons/Input'
 import { MenuItem } from "../types";
 import baseDictionary from "../dictionary";
 
@@ -30,7 +23,7 @@ export default function blockMenuItems(
       name: "heading",
       title: dictionary.h1,
       keywords: "h1 heading1 title",
-      icon: Heading1Icon,
+      icon: TitleIcon,
       shortcut: "^ ⇧ 1",
       attrs: { level: 1 },
     },
@@ -38,7 +31,7 @@ export default function blockMenuItems(
       name: "heading",
       title: dictionary.h2,
       keywords: "h2 heading2",
-      icon: Heading2Icon,
+      icon: TitleIcon,
       shortcut: "^ ⇧ 2",
       attrs: { level: 2 },
     },
@@ -46,7 +39,7 @@ export default function blockMenuItems(
       name: "heading",
       title: dictionary.h3,
       keywords: "h3 heading3",
-      icon: Heading3Icon,
+      icon: TitleIcon,
       shortcut: "^ ⇧ 3",
       attrs: { level: 3 },
     },
@@ -75,12 +68,12 @@ export default function blockMenuItems(
     {
       name: "separator",
     },
-    {
-      name: "table",
-      title: dictionary.table,
-      icon: TableIcon,
-      attrs: { rowsCount: 3, colsCount: 3 },
-    },
+    // {
+    //   name: "table",
+    //   title: dictionary.table,
+    //   icon: TableIcon,
+    //   attrs: { rowsCount: 3, colsCount: 3 },
+    // },
     {
       name: "blockquote",
       title: dictionary.quote,
@@ -107,36 +100,22 @@ export default function blockMenuItems(
       icon: ImageIcon,
       keywords: "picture photo",
     },
-    {
-      name: "link",
-      title: dictionary.link,
-      icon: LinkIcon,
-      shortcut: `${mod} k`,
-      keywords: "link url uri href",
-    },
+    // {
+    //   name: "link",
+    //   title: dictionary.link,
+    //   icon: LinkIcon,
+    //   shortcut: `${mod} k`,
+    //   keywords: "link url uri href",
+    // },
     {
       name: "separator",
     },
     {
-      name: "container_notice",
-      title: dictionary.infoNotice,
-      icon: InfoIcon,
+      name: "import",
+      title: "Import",
+      icon: ImportIcon,
       keywords: "container_notice card information",
       attrs: { style: "info" },
-    },
-    {
-      name: "container_notice",
-      title: dictionary.warningNotice,
-      icon: WarningIcon,
-      keywords: "container_notice card error",
-      attrs: { style: "warning" },
-    },
-    {
-      name: "container_notice",
-      title: dictionary.tipNotice,
-      icon: StarredIcon,
-      keywords: "container_notice card suggestion",
-      attrs: { style: "tip" },
     },
   ];
 }

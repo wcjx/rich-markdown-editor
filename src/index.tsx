@@ -68,8 +68,6 @@ import SmartText from "./plugins/SmartText";
 import TrailingNode from "./plugins/TrailingNode";
 import MarkdownPaste from "./plugins/MarkdownPaste";
 
-import Toolbar from "./components/Menu";
-
 export { schema, parser, serializer } from "./server";
 
 export { default as Extension } from "./lib/Extension";
@@ -95,9 +93,10 @@ export type Props = {
     [name: string]: (view: EditorView, event: Event) => boolean;
   };
   uploadImage?: (file: File) => Promise<string>;
+  importNode?: (pointer:string) => Promise<any>;
   onSave?: ({ done: boolean }) => void;
   onCancel?: () => void;
-  onChange: (value: () => { [key: string]: any }) => void;
+  onChange: (value: () => EditorView) => void;
   onImageUploadStart?: () => void;
   onImageUploadStop?: () => void;
   onCreateLink?: (title: string) => Promise<string>;
@@ -111,7 +110,6 @@ export type Props = {
   tooltip: typeof React.Component | React.FC<any>;
   className?: string;
   style?: Record<string, string>;
-  selectionToolbar: typeof Toolbar;
 };
 
 type State = {
@@ -447,8 +445,8 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
     }
   }
 
-  value = (): { [key: string]: any } => {
-    return this.view.state.doc.toJSON();
+  value = (): EditorView => {
+    return this.view;
   };
 
   handleChange = () => {
@@ -566,7 +564,6 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
       tooltip,
       className,
       onKeyDown,
-      selectionToolbar,
     } = this.props;
     const dictionary = this.dictionary(this.props.dictionary);
 
@@ -597,7 +594,6 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
                   onClickLink={this.props.onClickLink}
                   onCreateLink={this.props.onCreateLink}
                   tooltip={tooltip}
-                  Toolbar={selectionToolbar}
                 />
                 <LinkToolbar
                   view={this.view}
@@ -618,6 +614,7 @@ class RichMarkdownEditor extends React.PureComponent<Props, State> {
                   search={this.state.blockMenuSearch}
                   onClose={this.handleCloseBlockMenu}
                   uploadImage={this.props.uploadImage}
+                  importNode={this.props.importNode}
                   onLinkToolbarOpen={this.handleOpenLinkMenu}
                   onImageUploadStart={this.props.onImageUploadStart}
                   onImageUploadStop={this.props.onImageUploadStop}
@@ -793,25 +790,6 @@ const StyledEditor = styled("div")<{
     }
   }
 
-  h1:not(.placeholder):before {
-    content: "H1";
-  }
-  h2:not(.placeholder):before {
-    content: "H2";
-  }
-  h3:not(.placeholder):before {
-    content: "H3";
-  }
-  h4:not(.placeholder):before {
-    content: "H4";
-  }
-  h5:not(.placeholder):before {
-    content: "H5";
-  }
-  h6:not(.placeholder):before {
-    content: "H6";
-  }
-
   .with-emoji {
     margin-left: -1em;
   }
@@ -943,7 +921,7 @@ const StyledEditor = styled("div")<{
   }
 
   a {
-    color: ${props => props.theme.link};
+    // color: ${props => props.theme.link};
   }
 
   a:hover {
